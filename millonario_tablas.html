@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NÚCLEO DEL SISTEMA v10.0 (Núcleo Cromático Dinámico)</title>
+    <style>
+        :root {
+            /* // Protocolo del Núcleo Cromático: Variables de Rol */
+            --color-background-primary: #08080A;
+            --color-text-passive: #B0B4C0;
+            --color-accent-primary: #00FFFF;
+            --color-accent-error: #FF1A4B;
+            --font-primary: 'Courier New', Courier, monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font-primary); background-color: var(--color-background-primary); color: var(--color-text-passive); transition: background-color 0.5s; }
+        body::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(176, 180, 192, 0.05) 1px, transparent 1px);
+            background-size: 5px 5px; pointer-events: none; z-index: -1; animation: drift 120s linear infinite;
+        }
+        @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(200px, 200px); } }
+        .app-container { width: 100%; height: 100%; position: relative; }
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; opacity: 0; transition: opacity 0.5s ease-in-out;
+        }
+        .screen.active { display: flex; opacity: 1; }
+        .main-button {
+            background: transparent; border: 2px solid var(--color-accent-primary); color: var(--color-accent-primary);
+            padding: 15px 30px; font-family: var(--font-primary); font-size: 1.2rem;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: all 0.2s; box-shadow: 0 0 10px 0 var(--color-accent-primary);
+        }
+        .main-button:hover:not(:disabled) { background-color: var(--color-accent-primary); color: var(--color-background-primary); }
+        .main-button:active:not(:disabled) { transform: scale(0.98); }
+        .main-button:disabled { border-color: rgba(176, 180, 192, 0.2); color: rgba(176, 180, 192, 0.2); box-shadow: none; cursor: not-allowed; opacity: 0.4; }
+        .screen-title { font-size: 1.5rem; color: var(--color-accent-primary); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 40px; text-shadow: 0 0 5px var(--color-accent-primary); }
+        #preloader-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #title-screen h1 { font-size: 2.5rem; margin-bottom: 50px; color: var(--color-text-passive); font-weight: normal; }
+        #title-screen h1 span { color: var(--color-accent-primary); }
+        #identity-list { list-style: none; width: 100%; max-width: 500px; max-height: 80%; overflow-y: auto; padding: 5px; }
+        .identity-plate { display: flex; align-items: stretch; border: 2px solid var(--color-text-passive); margin-bottom: 15px; transition: border-color 0.2s, box-shadow 0.2s; }
+        .identity-plate:hover { border-color: var(--color-accent-primary); box-shadow: 0 0 10px 0 var(--color-accent-primary); }
+        .identity-main { flex-grow: 1; display: flex; flex-direction: column; cursor: pointer; }
+        .identity-name { padding: 15px 20px; font-size: 1.5rem; text-transform: uppercase; }
+        .identity-progress-container { padding: 0 20px 15px; }
+        .progress-bar-label { font-size: 0.8rem; opacity: 0.7; margin-bottom: 5px; }
+        .progress-bar-outline { width: 100%; height: 10px; border: 1px solid var(--color-text-passive); padding: 2px; }
+        .progress-bar-fill { width: 0%; height: 100%; background-color: var(--color-accent-primary); transition: width 0.5s ease-out; }
+        .identity-actions { display: flex; }
+        .identity-action-btn { flex-grow: 1; background-color: rgba(0, 255, 255, 0.1); border: none; border-top: 1px solid var(--color-accent-primary); color: var(--color-accent-primary); padding: 10px; cursor: pointer; }
+        .identity-delete { background-color: transparent; border: none; border-left: 2px solid var(--color-text-passive); color: var(--color-text-passive); font-size: 1.5rem; padding: 0 20px; cursor: pointer; transition: background-color 0.2s, color 0.2s; display: flex; align-items: center; }
+        .identity-delete:hover { background-color: var(--color-accent-error); color: var(--color-background-primary); }
+        .identity-add { width: 100%; text-align: center; cursor: pointer; padding: 20px; }
+        #registration-screen { justify-content: space-around; }
+        #operator-input-container { width: 100%; max-width: 500px; }
+        #operator-input { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--color-accent-primary); color: var(--color-text-passive); font-size: 2rem; text-align: center; text-transform: uppercase; padding: 10px; }
+        #operator-input:focus { outline: none; }
+        .keyboard-container { width: 100%; max-width: 800px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; }
+        .keyboard-key { background-color: rgba(176, 180, 192, 0.1); border: 1px solid var(--color-text-passive); color: var(--color-text-passive); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; user-select: none; transition: transform 0.1s, background-color 0.1s; }
+        .keyboard-key:active { transform: scale(0.97); background-color: rgba(0, 255, 255, 0.2); }
+        .key-special { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+        .key-shift.active { background-color: var(--color-accent-primary); color: var(--color-background-primary); }
+        #game-screen { justify-content: flex-start; }
+        #progress-screen { justify-content: space-around; }
+        #game-header { flex: 0 0 10%; display: flex; align-items: center; width: 100%; max-width: 800px; justify-content: space-between; font-size: 1.2rem; }
+        #question-box { flex: 0 0 50%; position: relative; width: 100%; max-width: 800px; border: 2px solid var(--color-accent-primary); padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #game-bottom-panel { flex: 0 0 40%; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #streak-counter { color: var(--color-accent-primary); transition: transform 0.2s; }
+        #streak-counter.pulse { transform: scale(1.2); }
+        .question-context { font-size: 1.2rem; opacity: 0.7; font-style: italic; margin-bottom: 15px; }
+        .question-data { font-size: 1.5rem; margin-bottom: 15px; }
+        .question-task { font-size: 1.5rem; color: var(--color-accent-primary); }
+        .highlight-number { color: var(--color-accent-primary); font-weight: bold; background-color: rgba(0, 255, 255, 0.1); padding: 2px 6px; border-radius: 3px; text-shadow: 0 0 5px var(--color-accent-primary); }
+        #help-button { position: absolute; top: 5px; right: 5px; width: 30px; height: 30px; background: transparent; border: 1px solid var(--color-accent-primary); color: var(--color-accent-primary); border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        #help-button:disabled { opacity: 0.2; cursor: not-allowed; }
+        #help-text { font-size: 1rem; color: var(--color-accent-primary); margin-top: 15px; }
+        .repeat-label { position: absolute; top: 10px; left: 10px; font-size: 0.8em; color: var(--color-accent-primary); font-weight: bold; background-color: rgba(0, 255, 255, 0.1); padding: 3px 10px; border-radius: 10px; }
+        #answers-container { width: 100%; max-width: 800px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .answer-btn { border: 2px solid var(--color-text-passive); background: transparent; color: var(--color-text-passive); padding: 20px; font-size: 1.5rem; cursor: pointer; text-align: left; transition: all 0.2s; }
+        .answer-btn:hover:not([disabled]) { border-color: var(--color-accent-primary); color: var(--color-accent-primary); }
+        .answer-btn[disabled] { cursor: not-allowed; } .answer-prefix { color: var(--color-accent-primary); margin-right: 15px; }
+        .answer-btn.correct { background-color: var(--color-accent-primary); color: var(--color-background-primary); border-color: var(--color-accent-primary); }
+        .answer-btn.incorrect { background-color: var(--color-accent-error); color: var(--color-background-primary); border-color: var(--color-accent-error); }
+        #game-controls, #progress-controls { margin-top: 20px; }
+        .final-review, #domain-map-container { font-size: 1.1em; margin-top: 15px; }
+        .final-review strong, #domain-map-container strong { color: var(--color-accent-primary); }
+        .final-review span { background-color: rgba(0,255,255,0.1); padding: 5px; border-radius: 5px; margin: 2px; display: inline-block; }
+        #domain-map { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 100%; max-width: 400px; margin-top: 20px; }
+        .map-cell { aspect-ratio: 1/1; border: 1px solid rgba(176, 180, 192, 0.2); transition: background-color 0.3s; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; }
+        .map-cell.correct { background-color: rgba(0, 255, 255, 0.3); }
+        .map-cell.incorrect { background-color: rgba(255, 26, 75, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="preloader-screen" class="screen active"> <canvas id="preloader-canvas"></canvas> </div>
+        <div id="title-screen" class="screen"> <h1>NÚCLEO <span>DEL SISTEMA</span></h1> <button id="start-button" class="main-button">[ EMPEZAR ]</button> </div>
+        <div id="identity-selection-screen" class="screen"> <h2 class="screen-title">SELECCIÓN DE IDENTIDAD</h2> <ul id="identity-list"></ul> </div>
+        <div id="registration-screen" class="screen"> <h2 class="screen-title">REGISTRO DE OPERADOR</h2> <div id="operator-input-container"> <input type="text" id="operator-input" readonly> </div> <div class="keyboard-container" id="virtual-keyboard"></div> </div>
+        <div id="game-screen" class="screen">
+            <div id="game-header"> <div id="game-question-counter">PROBLEMA 1/20</div> <div id="streak-counter">[ RACHA: x0 ]</div> <div id="game-score">PUNTOS: 0</div> </div>
+            <div id="question-box"> <button id="help-button">[?]</button> </div>
+            <div id="game-bottom-panel"> <div id="answers-container"></div> <div id="game-controls"> <button id="next-question-btn" class="main-button">[ SIGUIENTE ]</button> </div> </div>
+        </div>
+        <div id="progress-screen" class="screen">
+            <h2 class="screen-title">MAPA DE DOMINIO</h2>
+            <div id="domain-map-container"></div>
+            <div id="progress-controls"> <button id="back-to-identities-btn" class="main-button">[ VOLVER ]</button></div>
+        </div>
+    </div>
+<script>
+class SystemCore {
+    constructor() {
+        this.state = { operators: [], activeOperator: null,
+            game: { questionNumber: 0, score: 0, totalQuestions: 20, currentStreak: 0, currentCorrectAnswer: 0, currentPair: [], isRepeatQuestion: false, helpUsedThisTurn: false, gameOperations: [], reviewOperations: [], templateDeck: [] }
+        };
+        // // Protocolo del Núcleo Cromático: Base de Datos de Paletas
+        this.palettes = [
+            { name: "CÓDIGO CIAN", colors: { bg: "#08080A", text: "#B0B4C0", accent: "#00FFFF", error: "#FF1A4B" } },
+            { name: "VOLCÁN DE FUEGO", colors: { bg: "#100505", text: "#D6C2C2", accent: "#FF1A4B", error: "#E8FF3B" } },
+            { name: "JUNGLA SECRETA", colors: { bg: "#051007", text: "#C2D6C7", accent: "#00FF41", error: "#FF6B00" } },
+            { name: "GALAXIA PÚRPURA", colors: { bg: "#0C0510", text: "#CEC2D6", accent: "#A43BFF", error: "#3BFFF8" } },
+            { name: "TESORO DORADO", colors: { bg: "#1A1405", text: "#E0D6C2", accent: "#FFC700", error: "#FF3B3B" } },
+            { name: "OCÉANO PROFUNDO", colors: { bg: "#050C1A", text: "#C2D0E0", accent: "#007BFF", error: "#FFA500" } }
+        ];
+        this.storyDB = { locations: [ { ctx: "Vamos de compras.", i: [{ s: "palo de anticucho", p: "palos de anticucho", u: "cada palo" }] }, { ctx: "Es noche de película.", i: [{ s: "entrada", p: "entradas", u: "cada entrada" }] } ], socialActions: [ { ctx: "Es hora de compartir.", a: "repartir", o_s: "cuñapé", o_p: "cuñapés", g_s: "primo", g_p: "primos" }, { ctx: "Un regalo para tus amigos.", a: "regalar", o_s: "lámina", o_p: "láminas", g_s: "vecino", g_p: "vecinos" } ], containers: [ { ctx: "Ayudemos a ordenar.", c_s: "caja", c_p: "cajas", i_s: "alfajor", i_p: "alfajores" } ], constructions: [ { ctx: "¡A construir!", o_s: "bloque", o_p: "bloques", e_s: "fila", e_p: "filas" } ], timeEvents: [ { ctx: "Todo requiere tiempo.", a: "ahorrar", o_s: "boliviano", o_p: "bolivianos", p_s: "semana", p_p: "semanas" } ], collections: [ { ctx: "¡Vamos a coleccionar!", r_s: "gema", r_p: "gemas", f_s: "tesoro", f_p: "tesoros" } ] };
+        this.templates = [ this.locationTemplate, this.socialTemplate, this.containerTemplate, this.constructionTemplate, this.timeEventTemplate, this.collectionTemplate ];
+        this.cacheDOM(); this.initPreloader();
+    }
+    
+    cacheDOM() { this.dom = { screens: document.querySelectorAll('.screen'), preloaderCanvas: document.getElementById('preloader-canvas'), startButton: document.getElementById('start-button'), identityList: document.getElementById('identity-list'), virtualKeyboard: document.getElementById('virtual-keyboard'), operatorInput: document.getElementById('operator-input'), domainMapContainer: document.getElementById('domain-map-container'), backToIdentitiesBtn: document.getElementById('back-to-identities-btn'), game: { header: document.getElementById('game-header'), questionCounter: document.getElementById('game-question-counter'), streakCounter: document.getElementById('streak-counter'), score: document.getElementById('game-score'), questionBox: document.getElementById('question-box'), answersContainer: document.getElementById('answers-container'), nextButton: document.getElementById('next-question-btn'), helpButton: document.getElementById('help-button') } }; }
+    initPreloader() { const c = this.dom.preloaderCanvas, ctx = c.getContext('2d'); c.width = window.innerWidth; c.height = window.innerHeight; const ch = "SYS_CORE v10.0*&^#@!", fs = 14, col = c.width / fs, dr = Array(Math.floor(col)).fill(1); const draw = () => { ctx.fillStyle = 'rgba(8, 8, 10, 0.05)'; ctx.fillRect(0, 0, c.width, c.height); ctx.fillStyle = '#00FFFF'; ctx.font = `${fs}px var(--font-primary)`; for (let i = 0; i < dr.length; i++) { ctx.fillText(ch[Math.floor(Math.random() * ch.length)], i * fs, dr[i] * fs); if (dr[i] * fs > c.height && Math.random() > 0.975) dr[i] = 0; dr[i]++; } }; const int = setInterval(draw, 33); setTimeout(() => { clearInterval(int); this.init(); }, 3000); }
+    init() { this.applyRandomPalette(); this.loadOperators(); this.bindEvents(); if (this.state.operators.length > 0) { this.renderIdentityScreen(); this.showScreen('identity-selection-screen'); } else { this.showScreen('title-screen'); } }
+    bindEvents() {
+        this.dom.startButton.addEventListener('click', () => { this.renderKeyboard(); this.showScreen('registration-screen'); });
+        this.dom.identityList.addEventListener('click', (e) => {
+            const plate = e.target.closest('.identity-plate'); if (!plate) return;
+            const target = e.target; const id = plate.dataset.id;
+            if (target.classList.contains('identity-delete')) { this.handleDeleteOperator(id, plate); }
+            else if (target.dataset.action === 'progress') { this.state.activeOperator = this.state.operators.find(op => op.id == id); this.renderDomainMap(); this.showScreen('progress-screen'); }
+            else if (id === 'add-new') { this.renderKeyboard(); this.showScreen('registration-screen'); }
+            else if (target.closest('.identity-main')) { this.selectOperator(id); }
+        });
+        this.dom.virtualKeyboard.addEventListener('click', (e) => { if (e.target.classList.contains('keyboard-key')) this.handleKeyPress(e.target.dataset.key); });
+        this.dom.game.nextButton.addEventListener('click', () => this.generateQuestion());
+        this.dom.game.helpButton.addEventListener('click', () => this.displayHelp());
+        this.dom.backToIdentitiesBtn.addEventListener('click', () => { this.renderIdentityScreen(); this.showScreen('identity-selection-screen'); });
+    }
+
+    applyRandomPalette() { const p = this.getRandom(this.palettes).colors; document.documentElement.style.setProperty('--color-background-primary', p.bg); document.documentElement.style.setProperty('--color-text-passive', p.text); document.documentElement.style.setProperty('--color-accent-primary', p.accent); document.documentElement.style.setProperty('--color-accent-error', p.error); }
+    showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    loadOperators() { let ops = JSON.parse(localStorage.getItem('SYS_CORE_OP_v10.0') || '[]'); ops.forEach(op => { if (!op.progress) op.progress = { correct: [], incorrect: {} }; }); this.state.operators = ops; this.saveOperators(); }
+    saveOperators() { localStorage.setItem('SYS_CORE_OP_v10.0', JSON.stringify(this.state.operators)); }
+    addOperator(n) { const op = { id: Date.now(), name: n.trim().toUpperCase(), progress: { correct: [], incorrect: {} } }; this.state.operators.push(op); this.saveOperators(); this.selectOperator(op.id); }
+    handleDeleteOperator(id, el) { if (el.dataset.confirm === 'true') { this.state.operators = this.state.operators.filter(op => op.id != id); this.saveOperators(); this.renderIdentityScreen(); } else { el.dataset.confirm = 'true'; el.querySelector('.identity-name').textContent = '¿CONFIRMAR?'; el.querySelector('.identity-delete').style.cssText = 'background-color:var(--color-accent-error);color:var(--color-background-primary);'; setTimeout(() => { if(el){ el.dataset.confirm = 'false'; const op = this.state.operators.find(o => o.id == id); if (op) el.querySelector('.identity-name').textContent = op.name; el.querySelector('.identity-delete').style.cssText = ''; } }, 3000); } }
+    selectOperator(id) { this.state.activeOperator = this.state.operators.find(op => op.id == id); this.startGame(); }
+    renderIdentityScreen() {
+        this.dom.identityList.innerHTML = this.state.operators.map(op => { const mastery = op.progress.correct.length; return `<li class="identity-plate" data-id="${op.id}"><div class="identity-main"> <div class="identity-name">${op.name}</div><div class="identity-progress-container"><div class="progress-bar-label">Dominio: ${mastery}%</div><div class="progress-bar-outline"><div class="progress-bar-fill" style="width: ${mastery}%;"></div></div></div><div class="identity-actions"><button class="identity-action-btn" data-action="progress">VER MAPA</button></div></div><button class="identity-delete">[ X ]</button></li>`}).join('') + `<li class="identity-plate identity-add" data-id="add-new"><div class="identity-name">[ + NUEVO OPERADOR ]</div></li>`;
+    }
+    renderKeyboard() { this.dom.virtualKeyboard.innerHTML = ''; const lyt = {'Q':{r:1,c:1},'W':{r:1,c:2},'E':{r:1,c:3},'R':{r:1,c:4},'T':{r:1,c:5},'Y':{r:1,c:6},'U':{r:1,c:7},'I':{r:1,c:8},'O':{r:2,c:1},'P':{r:2,c:2},'A':{r:2,c:3},'S':{r:2,c:4},'D':{r:2,c:5},'F':{r:2,c:6},'G':{r:2,c:7},'H':{r:2,c:8},'J':{r:3,c:1},'K':{r:3,c:2},'L':{r:3,c:3},'Z':{r:3,c:4},'X':{r:3,c:5},'C':{r:3,c:6},'V':{r:3,c:7},'B':{r:4,c:3},'M':{r:4,c:4},'N':{r:4,c:5},'BORRAR':{key:'DEL',r:3,c:8,sp:true},'OK':{key:'ENTER',r:4,c:6,span:3,sp:true},'MAYÚS':{key:'SHIFT',r:4,c:1,span:2,sp:true}}; for(const [t,c] of Object.entries(lyt)){const kE=document.createElement('div');kE.className='keyboard-key';if(c.sp)kE.classList.add('key-special');kE.textContent=t;kE.dataset.key=c.key||t;kE.style.gridArea=`${c.r}/${c.c}/span 1/span ${c.span||1}`;this.dom.virtualKeyboard.appendChild(kE);} this.dom.operatorInput.value = ''; }
+    handleKeyPress(k) { let i = this.dom.operatorInput; if (k === 'DEL') i.value = i.value.slice(0, -1); else if (k === 'ENTER' && i.value.trim()) this.addOperator(i.value); else if (k === 'SHIFT') this.dom.virtualKeyboard.querySelector('[data-key="SHIFT"]').classList.toggle('active'); else if (i.value.length < 12 && k.length === 1) i.value += k; }
+    startGame() { const g = this.state.game; g.score = 0; g.questionNumber = 0; g.currentStreak = 0; g.gameOperations = this.generateFullOps(); g.reviewOperations = []; g.templateDeck = this.shuffle([...this.templates]); this.dom.game.header.style.display = 'flex'; this.showScreen('game-screen'); this.generateQuestion(); }
+    pluralize(q, s, p) { return q === 1 ? s : p; }
+    shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+    getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    generateFullOps() { const o=[]; for(let i=1;i<=10;i++){for(let j=1;j<=10;j++){o.push([i,j]);}} return this.shuffle(o); }
+    getNextPair() { const g=this.state.game; g.isRepeatQuestion=false; if(g.reviewOperations.length>0&&Math.random()<0.4){g.isRepeatQuestion=true;return g.reviewOperations[0];} if(g.gameOperations.length===0)g.gameOperations=this.generateFullOps(); return g.gameOperations.pop(); }
+    getNextTemplate() { const g=this.state.game; if(g.templateDeck.length===0)g.templateDeck=this.shuffle([...this.templates]); return g.templateDeck.pop(); }
+    
+    h(n) { return `<span class="highlight-number">${n}</span>`; }
+    locationTemplate(p,db,s){const[q,pr]=s.shuffle(p);const l=s.getRandom(db.locations),i=s.getRandom(l.i);return{ctx:l.ctx, data:`Hay ${s.h(q)} ${s.pluralize(q,i.s,i.p)}, y cada uno cuesta ${s.h(pr)} Bs.`, task:`¿Cuánto dinero necesitas en total?`};}
+    socialTemplate(p,db,s){const[q,n]=s.shuffle(p);const a=s.getRandom(db.socialActions);return{ctx:a.ctx, data:`Tienes ${s.h(n)} ${s.pluralize(n,a.g_s,a.g_p)} y le darás a cada uno ${s.h(q)} ${s.pluralize(q,a.o_s,a.o_p)}.`, task:`¿Cuántos ${s.pluralize(q*n,a.o_s,a.o_p)} repartirás en total?`};}
+    containerTemplate(p,db,s){const[n,q]=s.shuffle(p);const c=s.getRandom(db.containers);return{ctx:c.ctx, data:`Hay ${s.h(n)} ${s.pluralize(n,c.c_s,c.c_p)}, y en cada una hay ${s.h(q)} ${s.pluralize(q,c.i_s,c.i_p)}.`, task:`¿Cuántos ${s.pluralize(n*q,c.i_s,c.i_p)} hay en total?`};}
+    constructionTemplate(p,db,s){const[q,n]=s.shuffle(p);const c=s.getRandom(db.constructions);return{ctx:c.ctx, data:`Vas a hacer ${s.h(n)} ${s.pluralize(n,c.e_s,c.e_p)}. Para cada una, usarás ${s.h(q)} ${s.pluralize(q,c.o_s,c.o_p)}.`, task:`¿Cuántos ${s.pluralize(q*n,c.o_s,c.o_p)} necesitas en total?`};}
+    timeEventTemplate(p,db,s){const[q,n]=s.shuffle(p);const e=s.getRandom(db.timeEvents);return{ctx:e.ctx, data:`Logras ${e.a} ${s.h(q)} ${s.pluralize(q,e.o_s,e.o_p)} por cada ${e.p_s}.`, task:`Después de ${s.h(n)} ${s.pluralize(n,e.p_s,e.p_p)}, ¿cuánto tendrás?`};}
+    collectionTemplate(p,db,s){const[q,n]=s.shuffle(p);const c=s.getRandom(db.collections);return{ctx:c.ctx, data:`Ganas ${s.h(q)} ${s.pluralize(q,c.r_s,c.r_p)} por cada ${c.f_s}.`, task:`Si encuentras ${s.h(n)} ${s.pluralize(n,c.f_s,c.f_p)}, ¿cuántas ${s.pluralize(q*n,c.r_s,c.r_p)} tendrás?`};}
+    
+    generateQuestion() {
+        const g = this.state.game; g.questionNumber++;
+        if (g.questionNumber > g.totalQuestions) { this.endGame(); return; }
+        g.currentPair = this.getNextPair(); g.currentCorrectAnswer = g.currentPair[0] * g.currentPair[1];
+        g.helpUsedThisTurn = false;
+        const template = this.getNextTemplate(); const qObj = template(g.currentPair, this.storyDB, this);
+        this.updateGameUI(qObj);
+    }
+    
+    updateGameUI(qObj) {
+        const g = this.state.game, domG = this.dom.game;
+        domG.questionCounter.textContent = `PROBLEMA ${g.questionNumber}/${g.totalQuestions}`;
+        domG.score.textContent = `PUNTOS: ${g.score}`;
+        domG.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
+        
+        while (domG.questionBox.children.length > 1) domG.questionBox.removeChild(domG.questionBox.lastChild);
+        domG.helpButton.disabled = false;
+        
+        if (g.isRepeatQuestion) { const l=document.createElement('div'); l.className='repeat-label'; l.textContent='PROTOCOLO DE REFUERZO'; domG.questionBox.insertBefore(l, domG.helpButton.nextSibling); }
+        
+        const context = document.createElement('div'); context.className = 'question-context'; context.innerHTML = qObj.ctx;
+        const data = document.createElement('div'); data.className = 'question-data'; data.innerHTML = qObj.data;
+        const task = document.createElement('div'); task.className = 'question-task'; task.innerHTML = qObj.task;
+        domG.questionBox.appendChild(context); domG.questionBox.appendChild(data); domG.questionBox.appendChild(task);
+        
+        let opts = new Set([g.currentCorrectAnswer]); while(opts.size < 4) { let err = g.currentCorrectAnswer + (Math.floor(Math.random()*9)+1) * (Math.random() > 0.5 ? 1 : -1); if (err>0 && err !== g.currentCorrectAnswer) opts.add(err); }
+        const fO = this.shuffle(Array.from(opts)); domG.answersContainer.innerHTML = '';
+        fO.forEach((o, i) => { const b=document.createElement('button'); b.className='answer-btn'; b.innerHTML=`<span class="answer-prefix">${['A:','B:','C:','D:'][i]}</span> ${o}`; b.dataset.value=o; b.addEventListener('click',(e)=>this.selectAnswer(e)); domG.answersContainer.appendChild(b); });
+        domG.nextButton.disabled = true;
+    }
+    
+    displayHelp() {
+        const g = this.state.game; g.helpUsedThisTurn = true; g.currentStreak = 0;
+        this.dom.game.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
+        const hD = document.createElement('div'); hD.id='help-text'; hD.innerHTML = `AYUDA: Debes multiplicar ${this.h(g.currentPair[0])} por ${this.h(g.currentPair[1])}.`;
+        this.dom.game.questionBox.appendChild(hD); this.dom.game.helpButton.disabled = true;
+    }
+
+    selectAnswer(e) {
+        const selVal = parseInt(e.currentTarget.dataset.value), g = this.state.game, op = this.state.activeOperator;
+        const opKey = `${g.currentPair[0]}x${g.currentPair[1]}`;
+        if (selVal === g.currentCorrectAnswer) {
+            e.currentTarget.classList.add('correct'); g.currentStreak++;
+            if (!g.helpUsedThisTurn) { g.score += 100 + (g.currentStreak * 10); }
+            if (g.isRepeatQuestion) g.reviewOperations.shift();
+            if (!op.progress.correct.includes(opKey)) op.progress.correct.push(opKey);
+            delete op.progress.incorrect[opKey];
+        } else {
+            e.currentTarget.classList.add('incorrect'); g.currentStreak = 0;
+            if (g.isRepeatQuestion) g.reviewOperations.push(g.reviewOperations.shift());
+            else if (!g.reviewOperations.some(p => p.toString() === g.currentPair.toString())) g.reviewOperations.push(g.currentPair);
+            op.progress.incorrect[opKey] = (op.progress.incorrect[opKey] || 0) + 1;
+        }
+        this.saveOperators();
+        this.dom.game.score.textContent = `PUNTOS: ${g.score}`;
+        this.dom.game.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
+        this.dom.game.streakCounter.classList.add('pulse');
+        setTimeout(() => this.dom.game.streakCounter.classList.remove('pulse'), 200);
+        Array.from(this.dom.game.answersContainer.children).forEach(b => b.disabled = true);
+        this.dom.game.nextButton.disabled = false; this.dom.game.helpButton.disabled = true;
+    }
+
+    renderDomainMap() {
+        let html = `<strong>${this.state.activeOperator.name}</strong><div id="domain-map">`;
+        for(let i=1; i<=10; i++){ for(let j=1; j<=10; j++){
+            const key = `${i}x${j}`; let cellClass = 'map-cell';
+            if(this.state.activeOperator.progress.incorrect[key]) cellClass += ' incorrect';
+            else if(this.state.activeOperator.progress.correct.includes(key)) cellClass += ' correct';
+            html += `<div class="${cellClass}" title="${key}">${i}x${j}</div>`;
+        } }
+        html += '</div>'; this.dom.domainMapContainer.innerHTML = html;
+    }
+
+    endGame() {
+        const g = this.state.game; let msg = `SESIÓN COMPLETA. PUNTAJE FINAL: ${g.score}.`;
+        if (g.reviewOperations.length > 0) { msg += `<div class="final-review"><strong>OPERACIONES PARA REPASAR:</strong><br>${g.reviewOperations.map(p => `<span>${p[0]}x${p[1]}</span>`).join('')}</div>`; } 
+        else { msg += `<div class="final-review"><strong>DOMINIO TOTAL.</strong></div>`; }
+        this.dom.game.questionBox.innerHTML = msg; this.dom.game.header.style.display = 'none';
+        this.dom.game.nextButton.textContent = '[ VER PROGRESO ]';
+        this.dom.game.nextButton.onclick = () => {
+            this.dom.game.nextButton.textContent = '[ SIGUIENTE ]'; this.dom.game.nextButton.onclick = () => this.generateQuestion();
+            this.renderIdentityScreen(); this.showScreen('identity-selection-screen');
+        };
+    }
+}
+document.addEventListener('DOMContentLoaded', () => { new SystemCore(); });
+</script>
+</body>
+</html>
