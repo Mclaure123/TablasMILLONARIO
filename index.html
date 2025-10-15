@@ -2,269 +2,1327 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>NÚCLEO DEL SISTEMA v10.0 (Núcleo Cromático Dinámico)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL QUIZ v6.3.0 (MEJORADO)</title>
     <style>
         :root {
-            /* // Protocolo del Núcleo Cromático: Variables de Rol */
-            --color-background-primary: #08080A;
-            --color-text-passive: #B0B4C0;
-            --color-accent-primary: #00FFFF;
-            --color-accent-error: #FF1A4B;
-            --font-primary: 'Courier New', Courier, monospace;
+            --color-bg-primary: #0A0A0A; --color-surface: #141414; --color-func: #2A2A2A; --color-text-passive: #B0B0B0; --color-text-bright: #FFFFFF; --color-accent-primary: #00FFFF; --color-accent-bios: #00FF8A; --color-error: #FF414B; --color-success: #39FF14; --color-accent-gold: #FFD700; --color-warning: #FFD300;
+            --gap-s: clamp(4px, 1vmin, 8px);
+            --gap-m: clamp(8px, 2vmin, 16px);
+            --gap-l: clamp(16px, 4vmin, 32px);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; width: 100%; overflow: hidden; font-family: var(--font-primary); background-color: var(--color-background-primary); color: var(--color-text-passive); transition: background-color 0.5s; }
-        body::after {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: radial-gradient(rgba(176, 180, 192, 0.05) 1px, transparent 1px);
-            background-size: 5px 5px; pointer-events: none; z-index: -1; animation: drift 120s linear infinite;
+        html { height: 100%; font-size: clamp(10px, 2.5vmin, 22px); }
+        body { width: 100%; height: 100%; overflow: hidden; background-color: var(--color-bg-primary); color: var(--color-text-bright); font-family: Consolas, Menlo, Courier New, monospace; font-size: 1rem; position: relative; }
+        #perspective-container { perspective: 1200px; width: 100%; height: 100%; position: relative; }
+        body::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.5) 0px, rgba(0,0,0,0.4) 1px, transparent 2px, transparent 3px); z-index: 10; animation: scanline-scroll 20s linear infinite; }
+        @keyframes scanline-scroll { to { background-position-y: 100%; } }
+        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-image: linear-gradient(var(--color-surface) 1px, transparent 1px), linear-gradient(90deg, var(--color-surface) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.05; z-index: -1; }
+        main { width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform-style: preserve-3d; }
+        
+        /* MEJORA 1: Animaciones de entrada dinámicas */
+        .window { width: 100%; height: 100%; padding: 0 var(--gap-l); position: absolute; top: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; opacity: 0; transform: translateX(-100px) translateZ(-200px); pointer-events: none; visibility: hidden; transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 400ms cubic-bezier(0.4, 0, 0.2, 1), visibility 400ms; }
+        .window.active { opacity: 1; transform: translateX(0) translateZ(0px); pointer-events: auto; visibility: visible; }
+        
+        .window-content { flex-grow: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--gap-m) 0; min-height: 0; }
+        #preload, #title, #victory, #gameOver { justify-content: center; padding: var(--gap-m) var(--gap-l); }
+        h1 { font-size: clamp(2rem, 10vmin, 5rem); color: var(--color-accent-primary); letter-spacing: clamp(4px, 1vmin, 8px); text-shadow: 0 0 5px var(--color-accent-primary), 0 0 15px var(--color-accent-primary), 0 0 25px var(--color-accent-primary); max-width: 100%; word-break: break-word; }
+        h2 { font-size: clamp(1.5rem, 6vmin, 3rem); color: var(--color-text-bright); margin-bottom: var(--gap-m); display: flex; align-items: center; justify-content: center; }
+        p { font-size: clamp(0.8rem, 2.5vmin, 1.1rem); color: var(--color-text-passive); max-width: 90%; line-height: 1.6; }
+        
+        /* MEJORA 2: Efectos de brillo mejorados en botones */
+        .interactive-button, button { 
+            background: linear-gradient(135deg, var(--color-func) 0%, #1a1a1a 100%);
+            border: 2px solid var(--color-surface); 
+            color: var(--color-text-bright); 
+            padding: var(--gap-s) var(--gap-m); 
+            font-family: inherit; 
+            font-size: clamp(0.9rem, 2.5vmin, 1.2rem); 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0; 
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(200px, 200px); } }
-        .app-container { width: 100%; height: 100%; position: relative; }
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; opacity: 0; transition: opacity 0.5s ease-in-out;
+        .interactive-button::before, button::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
         }
-        .screen.active { display: flex; opacity: 1; }
-        .main-button {
-            background: transparent; border: 2px solid var(--color-accent-primary); color: var(--color-accent-primary);
-            padding: 15px 30px; font-family: var(--font-primary); font-size: 1.2rem;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-            transition: all 0.2s; box-shadow: 0 0 10px 0 var(--color-accent-primary);
+        .interactive-button:hover, button:hover { 
+            background: linear-gradient(135deg, var(--color-surface) 0%, #252525 100%);
+            border-color: var(--color-accent-primary); 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 255, 255, 0.4), 0 0 20px rgba(0, 255, 255, 0.2);
         }
-        .main-button:hover:not(:disabled) { background-color: var(--color-accent-primary); color: var(--color-background-primary); }
-        .main-button:active:not(:disabled) { transform: scale(0.98); }
-        .main-button:disabled { border-color: rgba(176, 180, 192, 0.2); color: rgba(176, 180, 192, 0.2); box-shadow: none; cursor: not-allowed; opacity: 0.4; }
-        .screen-title { font-size: 1.5rem; color: var(--color-accent-primary); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 40px; text-shadow: 0 0 5px var(--color-accent-primary); }
-        #preloader-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #title-screen h1 { font-size: 2.5rem; margin-bottom: 50px; color: var(--color-text-passive); font-weight: normal; }
-        #title-screen h1 span { color: var(--color-accent-primary); }
-        #identity-list { list-style: none; width: 100%; max-width: 500px; max-height: 80%; overflow-y: auto; padding: 5px; }
-        .identity-plate { display: flex; align-items: stretch; border: 2px solid var(--color-text-passive); margin-bottom: 15px; transition: border-color 0.2s, box-shadow 0.2s; }
-        .identity-plate:hover { border-color: var(--color-accent-primary); box-shadow: 0 0 10px 0 var(--color-accent-primary); }
-        .identity-main { flex-grow: 1; display: flex; flex-direction: column; cursor: pointer; }
-        .identity-name { padding: 15px 20px; font-size: 1.5rem; text-transform: uppercase; }
-        .identity-progress-container { padding: 0 20px 15px; }
-        .progress-bar-label { font-size: 0.8rem; opacity: 0.7; margin-bottom: 5px; }
-        .progress-bar-outline { width: 100%; height: 10px; border: 1px solid var(--color-text-passive); padding: 2px; }
-        .progress-bar-fill { width: 0%; height: 100%; background-color: var(--color-accent-primary); transition: width 0.5s ease-out; }
-        .identity-actions { display: flex; }
-        .identity-action-btn { flex-grow: 1; background-color: rgba(0, 255, 255, 0.1); border: none; border-top: 1px solid var(--color-accent-primary); color: var(--color-accent-primary); padding: 10px; cursor: pointer; }
-        .identity-delete { background-color: transparent; border: none; border-left: 2px solid var(--color-text-passive); color: var(--color-text-passive); font-size: 1.5rem; padding: 0 20px; cursor: pointer; transition: background-color 0.2s, color 0.2s; display: flex; align-items: center; }
-        .identity-delete:hover { background-color: var(--color-accent-error); color: var(--color-background-primary); }
-        .identity-add { width: 100%; text-align: center; cursor: pointer; padding: 20px; }
-        #registration-screen { justify-content: space-around; }
-        #operator-input-container { width: 100%; max-width: 500px; }
-        #operator-input { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--color-accent-primary); color: var(--color-text-passive); font-size: 2rem; text-align: center; text-transform: uppercase; padding: 10px; }
-        #operator-input:focus { outline: none; }
-        .keyboard-container { width: 100%; max-width: 800px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; }
-        .keyboard-key { background-color: rgba(176, 180, 192, 0.1); border: 1px solid var(--color-text-passive); color: var(--color-text-passive); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; user-select: none; transition: transform 0.1s, background-color 0.1s; }
-        .keyboard-key:active { transform: scale(0.97); background-color: rgba(0, 255, 255, 0.2); }
-        .key-special { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
-        .key-shift.active { background-color: var(--color-accent-primary); color: var(--color-background-primary); }
-        #game-screen { justify-content: flex-start; }
-        #progress-screen { justify-content: space-around; }
-        #game-header { flex: 0 0 10%; display: flex; align-items: center; width: 100%; max-width: 800px; justify-content: space-between; font-size: 1.2rem; }
-        #question-box { flex: 0 0 50%; position: relative; width: 100%; max-width: 800px; border: 2px solid var(--color-accent-primary); padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #game-bottom-panel { flex: 0 0 40%; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #streak-counter { color: var(--color-accent-primary); transition: transform 0.2s; }
-        #streak-counter.pulse { transform: scale(1.2); }
-        .question-context { font-size: 1.2rem; opacity: 0.7; font-style: italic; margin-bottom: 15px; }
-        .question-data { font-size: 1.5rem; margin-bottom: 15px; }
-        .question-task { font-size: 1.5rem; color: var(--color-accent-primary); }
-        .highlight-number { color: var(--color-accent-primary); font-weight: bold; background-color: rgba(0, 255, 255, 0.1); padding: 2px 6px; border-radius: 3px; text-shadow: 0 0 5px var(--color-accent-primary); }
-        #help-button { position: absolute; top: 5px; right: 5px; width: 30px; height: 30px; background: transparent; border: 1px solid var(--color-accent-primary); color: var(--color-accent-primary); border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        #help-button:disabled { opacity: 0.2; cursor: not-allowed; }
-        #help-text { font-size: 1rem; color: var(--color-accent-primary); margin-top: 15px; }
-        .repeat-label { position: absolute; top: 10px; left: 10px; font-size: 0.8em; color: var(--color-accent-primary); font-weight: bold; background-color: rgba(0, 255, 255, 0.1); padding: 3px 10px; border-radius: 10px; }
-        #answers-container { width: 100%; max-width: 800px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .answer-btn { border: 2px solid var(--color-text-passive); background: transparent; color: var(--color-text-passive); padding: 20px; font-size: 1.5rem; cursor: pointer; text-align: left; transition: all 0.2s; }
-        .answer-btn:hover:not([disabled]) { border-color: var(--color-accent-primary); color: var(--color-accent-primary); }
-        .answer-btn[disabled] { cursor: not-allowed; } .answer-prefix { color: var(--color-accent-primary); margin-right: 15px; }
-        .answer-btn.correct { background-color: var(--color-accent-primary); color: var(--color-background-primary); border-color: var(--color-accent-primary); }
-        .answer-btn.incorrect { background-color: var(--color-accent-error); color: var(--color-background-primary); border-color: var(--color-accent-error); }
-        #game-controls, #progress-controls { margin-top: 20px; }
-        .final-review, #domain-map-container { font-size: 1.1em; margin-top: 15px; }
-        .final-review strong, #domain-map-container strong { color: var(--color-accent-primary); }
-        .final-review span { background-color: rgba(0,255,255,0.1); padding: 5px; border-radius: 5px; margin: 2px; display: inline-block; }
-        #domain-map { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 100%; max-width: 400px; margin-top: 20px; }
-        .map-cell { aspect-ratio: 1/1; border: 1px solid rgba(176, 180, 192, 0.2); transition: background-color 0.3s; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; }
-        .map-cell.correct { background-color: rgba(0, 255, 255, 0.3); }
-        .map-cell.incorrect { background-color: rgba(255, 26, 75, 0.4); }
+        .interactive-button:hover::before, button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        .interactive-button:active, button:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .interactive-button:focus-visible, button:focus-visible { 
+            outline: 3px solid var(--color-accent-bios); 
+            outline-offset: 2px; 
+        }
+        .interactive-button:disabled, button:disabled { 
+            background: var(--color-func); 
+            border-color: #222; 
+            color: #444; 
+            cursor: not-allowed; 
+            opacity: 0.4; 
+            filter: grayscale(80%); 
+            transform: scale(0.95); 
+        }
+        
+        .telemetry-header { width: 100%; flex-shrink: 0; text-transform: uppercase; color: var(--color-text-passive); font-size: clamp(0.7rem, 2vmin, 0.9rem); letter-spacing: 2px; display: flex; justify-content: space-between; align-items: center; padding: var(--gap-s); border-bottom: 1px solid var(--color-surface); position: relative; }
+        .telemetry-footer { padding: var(--gap-s); border-top: 1px solid var(--color-surface); }
+        .telemetry-group { display: flex; align-items: center; gap: var(--gap-m); }
+        .settings-button { background: none; border: none; font-size: clamp(1.2rem, 4vmin, 1.8rem); color: var(--color-text-passive); cursor: pointer; padding: 0 var(--gap-s); transition: color 220ms, transform 220ms; }
+        .settings-button:hover { color: var(--color-accent-primary); transform: rotate(90deg); }
+        .settings-menu { position: absolute; top: 100%; right: 0; background-color: var(--color-bg-primary); border: 1px solid var(--color-surface); z-index: 100; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transform: translateY(-10px); pointer-events: none; transition: opacity 220ms, visibility 220ms, transform 220ms; }
+        .settings-menu.active { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+        .settings-menu button { width: 100%; text-align: left; background-color: var(--color-func); border: none; font-size: clamp(0.8rem, 2vmin, 1rem); border-top: 1px solid var(--color-surface); }
+        .settings-menu button:first-child { border-top: none; }
+        .settings-menu button:hover { background-color: var(--color-surface); }
+        .palette-container { position: relative; }
+        .palette-submenu { display: none; position: absolute; top: 0; right: 100%; background-color: var(--color-bg-primary); border: 1px solid var(--color-surface); }
+        .palette-container.open .palette-submenu { display: block; }
+        
+        /* MEJORA 3: Efecto de celebración con partículas */
+        @keyframes particle-burst {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        .celebration-particle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--particle-color, var(--color-accent-bios));
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            animation: particle-burst 1s ease-out forwards;
+            box-shadow: 0 0 10px var(--particle-color, var(--color-accent-bios));
+        }
+        
+        #glitch-wrapper.glitch-active { animation: glitch-error-effect 300ms ease-in-out; }
+        @keyframes glitch-error-effect { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-5px, -3px) skewX(-5deg); } 30% { transform: translate(3px, 5px) skewX(5deg); } 50% { transform: translate(-3px, -5px); } 70% { transform: translate(5px, 3px); } 90% { transform: translate(-3px, 3px) skewX(-2deg); } }
+        #holographic-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap-m); transform-style: preserve-3d; transform: rotateX(10deg); transition: transform 0.1s linear; filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.4)); width: 100%; max-width: 100%; }
+        #holographic-panel.error-flash { filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.8)) blur(1px); }
+        #profilesList { list-style: none; margin-bottom: var(--gap-m); display: flex; flex-direction: column; gap: var(--gap-s); max-height: 50vh; width: 100%; max-width: 450px; }
+        .profile-entry { display: flex; gap: var(--gap-s); align-items: center; }
+        .profile-button { flex-grow: 1; text-align: left; padding-left: 20px;}
+        .delete-button { width: clamp(38px, 10vmin, 48px); height: clamp(38px, 10vmin, 48px); padding: 0; font-size: clamp(1rem, 4vmin, 1.5rem); flex-shrink: 0; background-color: var(--color-error); border-color: #8B0000; }
+        #levelGrid { display: flex; flex-direction: column; gap: var(--gap-m); max-width: 550px; width: 100%; }
+        #levelGrid button { 
+            padding: var(--gap-m); 
+            font-size: clamp(0.9rem, 3vmin, 1.2rem); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 70px;
+        }
+        #levelGrid button::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: lcars-scan 4s linear infinite;
+        }
+        @keyframes lcars-scan {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .level-button-content { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%; 
+            gap: var(--gap-m);
+            z-index: 1;
+            position: relative;
+        }
+        .level-info-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex-grow: 1;
+            gap: 4px;
+        }
+        .level-category {
+            font-size: clamp(1rem, 3.5vmin, 1.4rem);
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--color-text-bright);
+        }
+        .level-starfleet-name {
+            font-size: clamp(0.7rem, 2vmin, 0.9rem);
+            color: var(--color-accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .level-title { flex-grow: 1; text-align: left; }
+        .progress-cubes-container { display: flex; gap: 4px; }
+        .progress-cube { 
+            width: clamp(8px, 2vmin, 12px); 
+            height: clamp(8px, 2vmin, 12px); 
+            border: 1px solid var(--color-surface); 
+            background-color: transparent;
+            transition: all 0.3s ease;
+        }
+        .progress-cube.filled { 
+            background: radial-gradient(circle, var(--color-accent-bios) 0%, rgba(34,139,34,0.7) 100%);
+            box-shadow: 0 0 6px var(--color-accent-bios);
+            animation: pulse-cube 2s ease-in-out infinite;
+        }
+        @keyframes pulse-cube {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* MEJORA DEL TECLADO VIRTUAL */
+        #playerNameDisplay { 
+            position: relative;
+            width: min(90vw, calc(var(--k) * 8 + var(--gap-s) * 7)); 
+            height: calc(var(--k) * 1.4); 
+            background: linear-gradient(135deg, var(--color-surface) 0%, #1a1a1a 100%);
+            border: 3px solid var(--color-func); 
+            color: var(--color-accent-primary); 
+            font-size: calc(var(--k) * 0.65); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            letter-spacing: 4px; 
+            margin-bottom: var(--gap-l);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 0 20px rgba(0, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        #playerNameDisplay .cursor {
+            position: absolute;
+            left: calc(50% + (var(--chars, 0) / 2 * 1ch) + 2px);
+            width: 0.6ch;
+            height: 70%;
+            background-color: var(--color-accent-primary);
+            animation: blink 1s steps(2, start) infinite;
+            box-shadow: 0 0 8px var(--color-accent-primary);
+        }
+        @keyframes blink { to { visibility: hidden; } }
+        #playerNameDisplay.shake { animation: shake-horizontal 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake-horizontal { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        #playerNameDisplay.error-flash { animation: flash-error 0.5s ease-out; }
+        @keyframes flash-error { 0%, 100% { border-color: var(--color-func); } 50% { border-color: var(--color-error); box-shadow: 0 0 30px rgba(255, 65, 75, 0.6); } }
+        
+        #virtualKeyboard { 
+            display: grid; 
+            grid-template-columns: repeat(8, var(--k)); 
+            grid-auto-rows: var(--k); 
+            gap: var(--gap-m);
+            max-width: 90vw;
+        }
+        #virtualKeyboard .key { 
+            padding: 0; 
+            font-size: calc(var(--k) * 0.55); 
+            text-transform: none;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #2e2e2e 0%, #1a1a1a 100%);
+            border: 2px solid #3a3a3a;
+            position: relative;
+        }
+        #virtualKeyboard .key:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.3);
+            border-color: var(--color-accent-primary);
+        }
+        #virtualKeyboard .key:active {
+            transform: translateY(1px) scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4);
+        }
+        .key[data-key="Enter"] { 
+            background: linear-gradient(145deg, var(--color-accent-bios) 0%, #00a060 100%);
+            border-color: #006400;
+            box-shadow: 0 4px 12px rgba(0, 255, 138, 0.3);
+        }
+        .key[data-key="Enter"]:hover {
+            box-shadow: 0 6px 20px rgba(0, 255, 138, 0.5);
+        }
+        .key[data-key="Shift"] { 
+            background: linear-gradient(145deg, #3a3a3a 0%, #1e1e1e 100%);
+        }
+        .key[data-key="Shift"].shift-active {
+            background: linear-gradient(145deg, var(--color-accent-primary) 0%, #00a0a0 100%);
+            border-color: var(--color-accent-primary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            color: #000;
+        }
+        .key[data-key="Backspace"] {
+            background: linear-gradient(145deg, #4a4a4a 0%, #2a2a2a 100%);
+        }
+        
+        #quizQuestion { font-size: clamp(1.2rem, 4vmin, 2rem); color: var(--color-accent-gold); margin-bottom: var(--gap-l); max-width: 900px; line-height: 1.5; }
+        #quizOptions { display: grid; grid-template-columns: 1fr; gap: var(--gap-m); width: 100%; max-width: 800px; }
+        @media (min-width: 600px) { #quizOptions { grid-template-columns: 1fr 1fr; } }
+        .option-button { 
+            padding: var(--gap-m); 
+            text-transform: none; 
+            font-size: clamp(1rem, 4vmin, 1.8rem); 
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-button.correct-answer { 
+            background: linear-gradient(135deg, var(--color-success) 0%, #1a8a0d 100%);
+            border-color: #0d5a00; 
+            color: var(--color-bg-primary);
+            animation: pulse-success 0.6s ease-out;
+            box-shadow: 0 0 30px rgba(57, 255, 20, 0.6);
+        }
+        @keyframes pulse-success {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .option-button.incorrect-answer { 
+            background: linear-gradient(135deg, var(--color-error) 0%, #8B0000 100%);
+            border-color: #660000;
+            animation: shake-wrong 0.5s ease-out;
+        }
+        @keyframes shake-wrong {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .ascii-art-container { width: clamp(90px, 20vmin, 120px); height: clamp(90px, 20vmin, 120px); margin-bottom: var(--gap-m); }
+        .centered-hud-item { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+        #gameHudPlayerName { color: var(--color-text-passive); }
+        #gameHudStreak { 
+            color: var(--color-accent-gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        #timeBarContainer { 
+            width: 120px; 
+            height: 14px; 
+            border: 2px solid var(--color-surface); 
+            background-color: #000; 
+            padding: 2px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #timeBarFill { 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--color-accent-bios) 0%, #00a060 100%);
+            transition: width 0.2s linear, background 0.5s ease;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 138, 0.5);
+        }
+        #timeBarFill.warning { 
+            background: linear-gradient(90deg, var(--color-warning) 0%, #cc9900 100%);
+            animation: pulse-warning 1s ease-in-out infinite;
+        }
+        #timeBarFill.critical { 
+            background: linear-gradient(90deg, var(--color-error) 0%, #cc0000 100%);
+            animation: pulse-critical 0.5s ease-in-out infinite;
+        }
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 211, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 211, 0, 0.8); }
+        }
+        @keyframes pulse-critical {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 65, 75, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 65, 75, 1); }
+        }
+        
+        #rankInsigniaDisplay { display: inline-block; width: 30px; height: 45px; vertical-align: middle; margin-left: var(--gap-m); }
+        #rankInsigniaDisplay svg { width: 100%; height: 100%; }
+        .mastery-insignia { width: 24px; height: 36px; flex-shrink: 0; }
+        .mastery-insignia svg { width: 100%; height: 100%; }
+        
+        /* MEJORA: Panel de Insignias estilo LCARS - SIN SCROLL */
+        #insigniasGrid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--gap-m); 
+            width: 100%; 
+            max-width: 1100px; 
+            padding: var(--gap-m);
+            /* Scroll removido para mostrar todas las insignias */
+            background: linear-gradient(135deg, 
+                rgba(255, 153, 102, 0.05) 0%,
+                rgba(153, 153, 255, 0.05) 50%,
+                rgba(204, 153, 204, 0.05) 100%
+            );
+            border-radius: 30px;
+            border: 3px solid rgba(0, 255, 255, 0.3);
+            position: relative;
+        }
+        #insigniasGrid::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg,
+                #FF9966 0%,
+                #9999FF 25%,
+                #CC99CC 50%,
+                #9999FF 75%,
+                #FF9966 100%
+            );
+            border-radius: 30px 30px 0 0;
+        }
+        /* Escaneo vertical periódico */
+        #insigniasGrid::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg,
+                transparent 0%,
+                rgba(0, 255, 255, 0.1) 49%,
+                rgba(0, 255, 255, 0.15) 50%,
+                rgba(0, 255, 255, 0.1) 51%,
+                transparent 100%
+            );
+            pointer-events: none;
+            animation: lcars-vertical-scan 5s linear infinite;
+        }
+        @keyframes lcars-vertical-scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(200%); }
+        }
+        /* Media query removida - sin scroll en todas las pantallas */
+
+        .insignia-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: var(--gap-m); 
+            text-align: center;
+            padding: var(--gap-m);
+            background: linear-gradient(135deg, 
+                rgba(42, 42, 42, 0.8) 0%, 
+                rgba(20, 20, 20, 0.8) 100%
+            );
+            border: 2px solid #FF9966;
+            border-radius: 15px 15px 15px 15px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .insignia-item::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg,
+                #FF9966 0%,
+                #9999FF 50%,
+                #CC99CC 100%
+            );
+            border-radius: 15px 0 0 15px;
+        }
+        .insignia-item:hover {
+            transform: translateY(-8px) scale(1.05);
+            border-color: var(--color-accent-primary);
+            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.4),
+                        0 0 40px rgba(0, 255, 255, 0.2);
+            background: linear-gradient(135deg, 
+                rgba(42, 42, 42, 1) 0%, 
+                rgba(30, 30, 30, 1) 100%
+            );
+        }
+        .insignia-item-svg { 
+            width: 70px; 
+            height: 105px;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            transition: filter 0.4s;
+        }
+        .insignia-item:hover .insignia-item-svg {
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+        }
+        .insignia-item-title { 
+            font-size: clamp(0.85rem, 2.5vmin, 1.1rem); 
+            color: var(--color-text-bright); 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: bold;
+            line-height: 1.3;
+        }
+        
+        /* ============================================
+           EFECTOS STAR TREK PARA PANTALLA DE VICTORIA
+           ============================================ */
+        .victory-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--gap-l);
+            width: 100%;
+            position: relative;
+        }
+        
+        /* Efecto de teletransporte */
+        .teleport-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 400px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .teleport-effect::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                transparent 0%, 
+                rgba(0, 255, 255, 0.1) 20%,
+                rgba(0, 255, 255, 0.2) 40%,
+                rgba(0, 255, 255, 0.3) 50%,
+                rgba(0, 255, 255, 0.2) 60%,
+                rgba(0, 255, 255, 0.1) 80%,
+                transparent 100%
+            );
+            animation: teleport-shimmer 2s ease-in-out infinite;
+        }
+        @keyframes teleport-shimmer {
+            0%, 100% { opacity: 0; transform: translateY(-100%); }
+            50% { opacity: 1; transform: translateY(100%); }
+        }
+        
+        /* Insignia flotante 3D */
+        .insignia-showcase {
+            width: 150px;
+            height: 200px;
+            perspective: 1000px;
+            position: relative;
+            z-index: 2;
+            margin: var(--gap-l) 0;
+        }
+        .insignia-3d-display {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: float-rotate 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+        }
+        .insignia-3d-display svg {
+            width: 100%;
+            height: 100%;
+        }
+        @keyframes float-rotate {
+            0%, 100% { transform: rotateY(0deg) translateY(0px); }
+            25% { transform: rotateY(90deg) translateY(-10px); }
+            50% { transform: rotateY(180deg) translateY(0px); }
+            75% { transform: rotateY(270deg) translateY(-10px); }
+        }
+        
+        /* Partículas orbitando */
+        .insignia-showcase::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbit-pulse 3s ease-in-out infinite;
+        }
+        @keyframes orbit-pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.3;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
+            }
+        }
+        
+        /* Panel LCARS */
+        .lcars-info-panel {
+            display: flex;
+            align-items: center;
+            gap: var(--gap-m);
+            padding: var(--gap-m);
+            background: linear-gradient(90deg, 
+                rgba(255, 153, 102, 0.1) 0%,
+                rgba(153, 153, 255, 0.1) 100%
+            );
+            border-radius: 20px 20px 20px 20px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            max-width: 600px;
+        }
+        .lcars-info-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(0, 255, 255, 0.2), 
+                transparent
+            );
+            animation: lcars-scan-victory 3s linear infinite;
+        }
+        @keyframes lcars-scan-victory {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        .lcars-bar {
+            width: 40px;
+            height: 60px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+        .lcars-bar.left-bar {
+            background: linear-gradient(180deg, #FF9966 0%, #CC6633 100%);
+        }
+        .lcars-bar.right-bar {
+            background: linear-gradient(180deg, #9999FF 0%, #6666CC 100%);
+        }
+        .victory-message {
+            font-size: clamp(1rem, 3vmin, 1.3rem);
+            color: var(--color-text-bright);
+            letter-spacing: 2px;
+            z-index: 1;
+        }
+        .victory-title {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        @keyframes glow-pulse {
+            0%, 100% { 
+                text-shadow: 0 0 10px var(--color-success),
+                             0 0 20px var(--color-success);
+            }
+            50% { 
+                text-shadow: 0 0 20px var(--color-success),
+                             0 0 40px var(--color-success),
+                             0 0 60px var(--color-success);
+            }
+        }
+        
+        /* Botón estilo Starfleet */
+        .starfleet-button {
+            background: linear-gradient(135deg, 
+                var(--color-accent-primary) 0%, 
+                #008B8B 100%
+            );
+            border: 3px solid var(--color-accent-primary);
+            color: #000;
+            font-weight: bold;
+            padding: var(--gap-m) var(--gap-l);
+            font-size: clamp(1rem, 3vmin, 1.3rem);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .starfleet-button::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            animation: starfleet-shine 3s linear infinite;
+        }
+        @keyframes starfleet-shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        .starfleet-button:hover {
+            background: linear-gradient(135deg, 
+                #00FFFF 0%, 
+                #00CED1 100%
+            );
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8),
+                        0 0 50px rgba(0, 255, 255, 0.5);
+            transform: translateY(-3px) scale(1.05);
+        }
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div id="preloader-screen" class="screen active"> <canvas id="preloader-canvas"></canvas> </div>
-        <div id="title-screen" class="screen"> <h1>NÚCLEO <span>DEL SISTEMA</span></h1> <button id="start-button" class="main-button">[ EMPEZAR ]</button> </div>
-        <div id="identity-selection-screen" class="screen"> <h2 class="screen-title">SELECCIÓN DE IDENTIDAD</h2> <ul id="identity-list"></ul> </div>
-        <div id="registration-screen" class="screen"> <h2 class="screen-title">REGISTRO DE OPERADOR</h2> <div id="operator-input-container"> <input type="text" id="operator-input" readonly> </div> <div class="keyboard-container" id="virtual-keyboard"></div> </div>
-        <div id="game-screen" class="screen">
-            <div id="game-header"> <div id="game-question-counter">PROBLEMA 1/20</div> <div id="streak-counter">[ RACHA: x0 ]</div> <div id="game-score">PUNTOS: 0</div> </div>
-            <div id="question-box"> <button id="help-button">[?]</button> </div>
-            <div id="game-bottom-panel"> <div id="answers-container"></div> <div id="game-controls"> <button id="next-question-btn" class="main-button">[ SIGUIENTE ]</button> </div> </div>
-        </div>
-        <div id="progress-screen" class="screen">
-            <h2 class="screen-title">MAPA DE DOMINIO</h2>
-            <div id="domain-map-container"></div>
-            <div id="progress-controls"> <button id="back-to-identities-btn" class="main-button">[ VOLVER ]</button></div>
-        </div>
+    <div id="perspective-container">
+        <main id="appContainer">
+            <div id="preload" class="window active"><H1>CARGANDO...</H1></div>
+            <div id="title" class="window"><h1>TERMINAL QUIZ</h1><p>PRESIONA CUALQUIER TECLA PARA CONTINUAR</p></div>
+            
+            <div id="profiles" class="window">
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: SELECT PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuProfiles">&#9881;</button><div id="settingsMenuProfiles" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
+                <div class="window-content"><h2>PERFILES DE USUARIO</h2><ul id="profilesList"></ul><button id="goToPlayerCreateButton" class="interactive-button">CREAR NUEVO PERFIL</button></div>
+                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+            </div>
+
+            <div id="player" class="window">
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: CREATE PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuPlayer">&#9881;</button><div id="settingsMenuPlayer" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
+                <div class="window-content"><h2>NUEVO JUGADOR</h2><div id="playerNameDisplay"><span id="playerNameText"></span><span class="cursor"></span></div><div id="virtualKeyboard"></div><div style="display: flex; gap: 16px; margin-top: 16px;"><button id="cancelPlayerButton">CANCELAR</button></div></div>
+                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+            </div>
+            
+            <div id="mainMenu" class="window">
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: MAIN MENU</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuMain">&#9881;</button><div id="settingsMenuMain" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
+                <div class="window-content">
+                    <h2 id="mainMenuHeader">JUGADOR: <span id="profileDisplayName"></span><span id="rankInsigniaDisplay"></span></h2>
+                    <div id="levelGrid"></div><button id="backToProfilesButton" style="margin-top: 16px;">VOLVER A PERFILES</button>
+                </div>
+                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+            </div>
+            
+            <div id="game" class="window">
+                <header class="telemetry-header">
+                    <span id="gameHudStreak">RACHA: 0</span>
+                    <span id="gameHudPlayerName" class="centered-hud-item"></span>
+                    <div class="telemetry-group">
+                        <div id="timeBarContainer"><div id="timeBarFill"></div></div>
+                        <button class="settings-button" data-menu-id="settingsMenuGame">&#9881;</button>
+                        <div id="settingsMenuGame" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div>
+                    </div>
+                </header>
+                <div class="window-content"><div id="glitch-wrapper"><div id="holographic-panel"><h2>CALCULAR</h2><p id="quizQuestion"></p><div id="quizOptions"></div></div></div></div>
+                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+            </div>
+            
+            <div id="victory" class="window">
+                <div class="victory-container">
+                    <div class="teleport-effect" id="teleportEffect"></div>
+                    <div class="insignia-showcase" id="insigniaShowcase">
+                        <div class="insignia-3d-display" id="insignia3dDisplay"></div>
+                    </div>
+                    <h1 style="color: var(--color-success); text-shadow: 0 0 20px var(--color-success);">RESPUESTA CORRECTA</h1>
+                    <h2 class="victory-title">VICTORIA</h2>
+                    <div class="lcars-info-panel">
+                        <div class="lcars-bar left-bar"></div>
+                        <p class="victory-message">HAS RESUELTO LA OPERACIÓN.</p>
+                        <div class="lcars-bar right-bar"></div>
+                    </div>
+                    <button id="victoryToMenuButton" class="starfleet-button">TRANSPORTAR AL MENÚ</button>
+                </div>
+            </div>
+            <div id="gameOver" class="window"><div class="ascii-art-container"><div class="ascii-art ascii-art-defeat"></div></div><h1 style="color: var(--color-error);">RESPUESTA INCORRECTA</h1><h2>DERROTA</h2><p id="gameOverCorrectAnswer"></p><button id="gameOverToMenuButton">REINTENTAR DESDE EL MENÚ</button></div>
+            
+            <div id="insignias" class="window">
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: VISUALIZADOR DE INSIGNIAS</span></header>
+                <div class="window-content"><h2 style="margin-bottom: var(--gap-l);">COLECCIÓN DE INSIGNIAS</h2><div id="insigniasGrid"></div></div>
+                <footer class="telemetry-footer"><button id="closeInsigniasButton">VOLVER</button></footer>
+            </div>
+
+            <div id="fullscreenOverlay" class="window" style="z-index: 999; background-color: rgba(0,0,0,0.95);"><h2>MODO PANTALLA COMPLETA REQUERIDO</h2><p>PARA UNA EXPERIENCIA ÓPTIMA, EL SISTEMA REQUIERE OPERAR EN MODO DE PANTALLA COMPLETA.</p><button id="reEnterFullscreenButton">REACTIVAR</button></div>
+        </main>
     </div>
-<script>
-class SystemCore {
-    constructor() {
-        this.state = { operators: [], activeOperator: null,
-            game: { questionNumber: 0, score: 0, totalQuestions: 20, currentStreak: 0, currentCorrectAnswer: 0, currentPair: [], isRepeatQuestion: false, helpUsedThisTurn: false, gameOperations: [], reviewOperations: [], templateDeck: [] }
-        };
-        // // Protocolo del Núcleo Cromático: Base de Datos de Paletas
-        this.palettes = [
-            { name: "CÓDIGO CIAN", colors: { bg: "#08080A", text: "#B0B4C0", accent: "#00FFFF", error: "#FF1A4B" } },
-            { name: "VOLCÁN DE FUEGO", colors: { bg: "#100505", text: "#D6C2C2", accent: "#FF1A4B", error: "#E8FF3B" } },
-            { name: "JUNGLA SECRETA", colors: { bg: "#051007", text: "#C2D6C7", accent: "#00FF41", error: "#FF6B00" } },
-            { name: "GALAXIA PÚRPURA", colors: { bg: "#0C0510", text: "#CEC2D6", accent: "#A43BFF", error: "#3BFFF8" } },
-            { name: "TESORO DORADO", colors: { bg: "#1A1405", text: "#E0D6C2", accent: "#FFC700", error: "#FF3B3B" } },
-            { name: "OCÉANO PROFUNDO", colors: { bg: "#050C1A", text: "#C2D0E0", accent: "#007BFF", error: "#FFA500" } }
-        ];
-        this.storyDB = { locations: [ { ctx: "Vamos de compras.", i: [{ s: "palo de anticucho", p: "palos de anticucho", u: "cada palo" }] }, { ctx: "Es noche de película.", i: [{ s: "entrada", p: "entradas", u: "cada entrada" }] } ], socialActions: [ { ctx: "Es hora de compartir.", a: "repartir", o_s: "cuñapé", o_p: "cuñapés", g_s: "primo", g_p: "primos" }, { ctx: "Un regalo para tus amigos.", a: "regalar", o_s: "lámina", o_p: "láminas", g_s: "vecino", g_p: "vecinos" } ], containers: [ { ctx: "Ayudemos a ordenar.", c_s: "caja", c_p: "cajas", i_s: "alfajor", i_p: "alfajores" } ], constructions: [ { ctx: "¡A construir!", o_s: "bloque", o_p: "bloques", e_s: "fila", e_p: "filas" } ], timeEvents: [ { ctx: "Todo requiere tiempo.", a: "ahorrar", o_s: "boliviano", o_p: "bolivianos", p_s: "semana", p_p: "semanas" } ], collections: [ { ctx: "¡Vamos a coleccionar!", r_s: "gema", r_p: "gemas", f_s: "tesoro", f_p: "tesoros" } ] };
-        this.templates = [ this.locationTemplate, this.socialTemplate, this.containerTemplate, this.constructionTemplate, this.timeEventTemplate, this.collectionTemplate ];
-        this.cacheDOM(); this.initPreloader();
-    }
-    
-    cacheDOM() { this.dom = { screens: document.querySelectorAll('.screen'), preloaderCanvas: document.getElementById('preloader-canvas'), startButton: document.getElementById('start-button'), identityList: document.getElementById('identity-list'), virtualKeyboard: document.getElementById('virtual-keyboard'), operatorInput: document.getElementById('operator-input'), domainMapContainer: document.getElementById('domain-map-container'), backToIdentitiesBtn: document.getElementById('back-to-identities-btn'), game: { header: document.getElementById('game-header'), questionCounter: document.getElementById('game-question-counter'), streakCounter: document.getElementById('streak-counter'), score: document.getElementById('game-score'), questionBox: document.getElementById('question-box'), answersContainer: document.getElementById('answers-container'), nextButton: document.getElementById('next-question-btn'), helpButton: document.getElementById('help-button') } }; }
-    initPreloader() { const c = this.dom.preloaderCanvas, ctx = c.getContext('2d'); c.width = window.innerWidth; c.height = window.innerHeight; const ch = "SYS_CORE v10.0*&^#@!", fs = 14, col = c.width / fs, dr = Array(Math.floor(col)).fill(1); const draw = () => { ctx.fillStyle = 'rgba(8, 8, 10, 0.05)'; ctx.fillRect(0, 0, c.width, c.height); ctx.fillStyle = '#00FFFF'; ctx.font = `${fs}px var(--font-primary)`; for (let i = 0; i < dr.length; i++) { ctx.fillText(ch[Math.floor(Math.random() * ch.length)], i * fs, dr[i] * fs); if (dr[i] * fs > c.height && Math.random() > 0.975) dr[i] = 0; dr[i]++; } }; const int = setInterval(draw, 33); setTimeout(() => { clearInterval(int); this.init(); }, 3000); }
-    init() { this.applyRandomPalette(); this.loadOperators(); this.bindEvents(); if (this.state.operators.length > 0) { this.renderIdentityScreen(); this.showScreen('identity-selection-screen'); } else { this.showScreen('title-screen'); } }
-    bindEvents() {
-        this.dom.startButton.addEventListener('click', () => { this.renderKeyboard(); this.showScreen('registration-screen'); });
-        this.dom.identityList.addEventListener('click', (e) => {
-            const plate = e.target.closest('.identity-plate'); if (!plate) return;
-            const target = e.target; const id = plate.dataset.id;
-            if (target.classList.contains('identity-delete')) { this.handleDeleteOperator(id, plate); }
-            else if (target.dataset.action === 'progress') { this.state.activeOperator = this.state.operators.find(op => op.id == id); this.renderDomainMap(); this.showScreen('progress-screen'); }
-            else if (id === 'add-new') { this.renderKeyboard(); this.showScreen('registration-screen'); }
-            else if (target.closest('.identity-main')) { this.selectOperator(id); }
-        });
-        this.dom.virtualKeyboard.addEventListener('click', (e) => { if (e.target.classList.contains('keyboard-key')) this.handleKeyPress(e.target.dataset.key); });
-        this.dom.game.nextButton.addEventListener('click', () => this.generateQuestion());
-        this.dom.game.helpButton.addEventListener('click', () => this.displayHelp());
-        this.dom.backToIdentitiesBtn.addEventListener('click', () => { this.renderIdentityScreen(); this.showScreen('identity-selection-screen'); });
-    }
+    <script>
+        (function() {
+            'use strict';
+            var QUESTION_TIME = 25;
+            
+            // MEJORA: Función para crear partículas de celebración
+            function createCelebrationParticles(x, y) {
+                var colors = ['#39FF14', '#00FFFF', '#FFD700', '#00FF8A'];
+                for (var i = 0; i < 20; i++) {
+                    var particle = document.createElement('div');
+                    particle.className = 'celebration-particle';
+                    var color = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.setProperty('--particle-color', color);
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    var angle = (Math.PI * 2 * i) / 20;
+                    var distance = 100 + Math.random() * 100;
+                    var tx = Math.cos(angle) * distance;
+                    var ty = Math.sin(angle) * distance;
+                    particle.style.setProperty('--tx', tx + 'px');
+                    particle.style.setProperty('--ty', ty + 'px');
+                    document.body.appendChild(particle);
+                    setTimeout(function(p) { return function() { if (p.parentNode) p.parentNode.removeChild(p); }; }(particle), 1000);
+                }
+            }
+            
+            function createEventBus() { var listeners = {}; return { on: function(eventName, callback) { if (!listeners[eventName]) { listeners[eventName] = []; } listeners[eventName].push(callback); }, off: function(eventName, callback) { if (!listeners[eventName]) return; listeners[eventName] = listeners[eventName].filter(function(cb) { return cb !== callback; }); }, emit: function(eventName, data) { if (!listeners[eventName]) return; listeners[eventName].forEach(function(callback) { callback(data); }); } }; }
+            var EventBus = createEventBus();
+            var AudioManager = { audioCtx: null, init: function() { if (!this.audioCtx && (window.AudioContext || window.webkitAudioContext)) { try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { console.error("[AUDIO] Web Audio API not supported.", e); } } }, playSound: function(type) { if (!state.settings.soundEnabled || !this.audioCtx) return; var osc = this.audioCtx.createOscillator(); var gain = this.audioCtx.createGain(); osc.connect(gain); gain.connect(this.audioCtx.destination); var now = this.audioCtx.currentTime; switch(type) { case 'tick': osc.type = 'triangle'; osc.frequency.setValueAtTime(880, now); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); osc.start(now); osc.stop(now + 0.1); break; case 'success': osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); osc.start(now); osc.stop(now + 0.1); break; case 'error': osc.type = 'square'; osc.frequency.setValueAtTime(164.81, now); osc.frequency.exponentialRampToValueAtTime(73.42, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2); osc.start(now); osc.stop(now + 0.2); break; case 'navigate': osc.type = 'sine'; osc.frequency.setValueAtTime(330, now); osc.frequency.exponentialRampToValueAtTime(660, now + 0.15); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15); osc.start(now); osc.stop(now + 0.15); break; } } };
+            
+            function getDefaultSettings() { return { soundEnabled: true, paletteIndex: 0 }; }
+            function getEmptyProfileData() { return { solvedQuestions: { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false } }; }
 
-    applyRandomPalette() { const p = this.getRandom(this.palettes).colors; document.documentElement.style.setProperty('--color-background-primary', p.bg); document.documentElement.style.setProperty('--color-text-passive', p.text); document.documentElement.style.setProperty('--color-accent-primary', p.accent); document.documentElement.style.setProperty('--color-accent-error', p.error); }
-    showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-    loadOperators() { let ops = JSON.parse(localStorage.getItem('SYS_CORE_OP_v10.0') || '[]'); ops.forEach(op => { if (!op.progress) op.progress = { correct: [], incorrect: {} }; }); this.state.operators = ops; this.saveOperators(); }
-    saveOperators() { localStorage.setItem('SYS_CORE_OP_v10.0', JSON.stringify(this.state.operators)); }
-    addOperator(n) { const op = { id: Date.now(), name: n.trim().toUpperCase(), progress: { correct: [], incorrect: {} } }; this.state.operators.push(op); this.saveOperators(); this.selectOperator(op.id); }
-    handleDeleteOperator(id, el) { if (el.dataset.confirm === 'true') { this.state.operators = this.state.operators.filter(op => op.id != id); this.saveOperators(); this.renderIdentityScreen(); } else { el.dataset.confirm = 'true'; el.querySelector('.identity-name').textContent = '¿CONFIRMAR?'; el.querySelector('.identity-delete').style.cssText = 'background-color:var(--color-accent-error);color:var(--color-background-primary);'; setTimeout(() => { if(el){ el.dataset.confirm = 'false'; const op = this.state.operators.find(o => o.id == id); if (op) el.querySelector('.identity-name').textContent = op.name; el.querySelector('.identity-delete').style.cssText = ''; } }, 3000); } }
-    selectOperator(id) { this.state.activeOperator = this.state.operators.find(op => op.id == id); this.startGame(); }
-    renderIdentityScreen() {
-        this.dom.identityList.innerHTML = this.state.operators.map(op => { const mastery = op.progress.correct.length; return `<li class="identity-plate" data-id="${op.id}"><div class="identity-main"> <div class="identity-name">${op.name}</div><div class="identity-progress-container"><div class="progress-bar-label">Dominio: ${mastery}%</div><div class="progress-bar-outline"><div class="progress-bar-fill" style="width: ${mastery}%;"></div></div></div><div class="identity-actions"><button class="identity-action-btn" data-action="progress">VER MAPA</button></div></div><button class="identity-delete">[ X ]</button></li>`}).join('') + `<li class="identity-plate identity-add" data-id="add-new"><div class="identity-name">[ + NUEVO OPERADOR ]</div></li>`;
-    }
-    renderKeyboard() { this.dom.virtualKeyboard.innerHTML = ''; const lyt = {'Q':{r:1,c:1},'W':{r:1,c:2},'E':{r:1,c:3},'R':{r:1,c:4},'T':{r:1,c:5},'Y':{r:1,c:6},'U':{r:1,c:7},'I':{r:1,c:8},'O':{r:2,c:1},'P':{r:2,c:2},'A':{r:2,c:3},'S':{r:2,c:4},'D':{r:2,c:5},'F':{r:2,c:6},'G':{r:2,c:7},'H':{r:2,c:8},'J':{r:3,c:1},'K':{r:3,c:2},'L':{r:3,c:3},'Z':{r:3,c:4},'X':{r:3,c:5},'C':{r:3,c:6},'V':{r:3,c:7},'B':{r:4,c:3},'M':{r:4,c:4},'N':{r:4,c:5},'BORRAR':{key:'DEL',r:3,c:8,sp:true},'OK':{key:'ENTER',r:4,c:6,span:3,sp:true},'MAYÚS':{key:'SHIFT',r:4,c:1,span:2,sp:true}}; for(const [t,c] of Object.entries(lyt)){const kE=document.createElement('div');kE.className='keyboard-key';if(c.sp)kE.classList.add('key-special');kE.textContent=t;kE.dataset.key=c.key||t;kE.style.gridArea=`${c.r}/${c.c}/span 1/span ${c.span||1}`;this.dom.virtualKeyboard.appendChild(kE);} this.dom.operatorInput.value = ''; }
-    handleKeyPress(k) { let i = this.dom.operatorInput; if (k === 'DEL') i.value = i.value.slice(0, -1); else if (k === 'ENTER' && i.value.trim()) this.addOperator(i.value); else if (k === 'SHIFT') this.dom.virtualKeyboard.querySelector('[data-key="SHIFT"]').classList.toggle('active'); else if (i.value.length < 12 && k.length === 1) i.value += k; }
-    startGame() { const g = this.state.game; g.score = 0; g.questionNumber = 0; g.currentStreak = 0; g.gameOperations = this.generateFullOps(); g.reviewOperations = []; g.templateDeck = this.shuffle([...this.templates]); this.dom.game.header.style.display = 'flex'; this.showScreen('game-screen'); this.generateQuestion(); }
-    pluralize(q, s, p) { return q === 1 ? s : p; }
-    shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-    getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-    generateFullOps() { const o=[]; for(let i=1;i<=10;i++){for(let j=1;j<=10;j++){o.push([i,j]);}} return this.shuffle(o); }
-    getNextPair() { const g=this.state.game; g.isRepeatQuestion=false; if(g.reviewOperations.length>0&&Math.random()<0.4){g.isRepeatQuestion=true;return g.reviewOperations[0];} if(g.gameOperations.length===0)g.gameOperations=this.generateFullOps(); return g.gameOperations.pop(); }
-    getNextTemplate() { const g=this.state.game; if(g.templateDeck.length===0)g.templateDeck=this.shuffle([...this.templates]); return g.templateDeck.pop(); }
-    
-    h(n) { return `<span class="highlight-number">${n}</span>`; }
-    locationTemplate(p,db,s){const[q,pr]=s.shuffle(p);const l=s.getRandom(db.locations),i=s.getRandom(l.i);return{ctx:l.ctx, data:`Hay ${s.h(q)} ${s.pluralize(q,i.s,i.p)}, y cada uno cuesta ${s.h(pr)} Bs.`, task:`¿Cuánto dinero necesitas en total?`};}
-    socialTemplate(p,db,s){const[q,n]=s.shuffle(p);const a=s.getRandom(db.socialActions);return{ctx:a.ctx, data:`Tienes ${s.h(n)} ${s.pluralize(n,a.g_s,a.g_p)} y le darás a cada uno ${s.h(q)} ${s.pluralize(q,a.o_s,a.o_p)}.`, task:`¿Cuántos ${s.pluralize(q*n,a.o_s,a.o_p)} repartirás en total?`};}
-    containerTemplate(p,db,s){const[n,q]=s.shuffle(p);const c=s.getRandom(db.containers);return{ctx:c.ctx, data:`Hay ${s.h(n)} ${s.pluralize(n,c.c_s,c.c_p)}, y en cada una hay ${s.h(q)} ${s.pluralize(q,c.i_s,c.i_p)}.`, task:`¿Cuántos ${s.pluralize(n*q,c.i_s,c.i_p)} hay en total?`};}
-    constructionTemplate(p,db,s){const[q,n]=s.shuffle(p);const c=s.getRandom(db.constructions);return{ctx:c.ctx, data:`Vas a hacer ${s.h(n)} ${s.pluralize(n,c.e_s,c.e_p)}. Para cada una, usarás ${s.h(q)} ${s.pluralize(q,c.o_s,c.o_p)}.`, task:`¿Cuántos ${s.pluralize(q*n,c.o_s,c.o_p)} necesitas en total?`};}
-    timeEventTemplate(p,db,s){const[q,n]=s.shuffle(p);const e=s.getRandom(db.timeEvents);return{ctx:e.ctx, data:`Logras ${e.a} ${s.h(q)} ${s.pluralize(q,e.o_s,e.o_p)} por cada ${e.p_s}.`, task:`Después de ${s.h(n)} ${s.pluralize(n,e.p_s,e.p_p)}, ¿cuánto tendrás?`};}
-    collectionTemplate(p,db,s){const[q,n]=s.shuffle(p);const c=s.getRandom(db.collections);return{ctx:c.ctx, data:`Ganas ${s.h(q)} ${s.pluralize(q,c.r_s,c.r_p)} por cada ${c.f_s}.`, task:`Si encuentras ${s.h(n)} ${s.pluralize(n,c.f_s,c.f_p)}, ¿cuántas ${s.pluralize(q*n,c.r_s,c.r_p)} tendrás?`};}
-    
-    generateQuestion() {
-        const g = this.state.game; g.questionNumber++;
-        if (g.questionNumber > g.totalQuestions) { this.endGame(); return; }
-        g.currentPair = this.getNextPair(); g.currentCorrectAnswer = g.currentPair[0] * g.currentPair[1];
-        g.helpUsedThisTurn = false;
-        const template = this.getNextTemplate(); const qObj = template(g.currentPair, this.storyDB, this);
-        this.updateGameUI(qObj);
-    }
-    
-    updateGameUI(qObj) {
-        const g = this.state.game, domG = this.dom.game;
-        domG.questionCounter.textContent = `PROBLEMA ${g.questionNumber}/${g.totalQuestions}`;
-        domG.score.textContent = `PUNTOS: ${g.score}`;
-        domG.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
-        
-        while (domG.questionBox.children.length > 1) domG.questionBox.removeChild(domG.questionBox.lastChild);
-        domG.helpButton.disabled = false;
-        
-        if (g.isRepeatQuestion) { const l=document.createElement('div'); l.className='repeat-label'; l.textContent='PROTOCOLO DE REFUERZO'; domG.questionBox.insertBefore(l, domG.helpButton.nextSibling); }
-        
-        const context = document.createElement('div'); context.className = 'question-context'; context.innerHTML = qObj.ctx;
-        const data = document.createElement('div'); data.className = 'question-data'; data.innerHTML = qObj.data;
-        const task = document.createElement('div'); task.className = 'question-task'; task.innerHTML = qObj.task;
-        domG.questionBox.appendChild(context); domG.questionBox.appendChild(data); domG.questionBox.appendChild(task);
-        
-        let opts = new Set([g.currentCorrectAnswer]); while(opts.size < 4) { let err = g.currentCorrectAnswer + (Math.floor(Math.random()*9)+1) * (Math.random() > 0.5 ? 1 : -1); if (err>0 && err !== g.currentCorrectAnswer) opts.add(err); }
-        const fO = this.shuffle(Array.from(opts)); domG.answersContainer.innerHTML = '';
-        fO.forEach((o, i) => { const b=document.createElement('button'); b.className='answer-btn'; b.innerHTML=`<span class="answer-prefix">${['A:','B:','C:','D:'][i]}</span> ${o}`; b.dataset.value=o; b.addEventListener('click',(e)=>this.selectAnswer(e)); domG.answersContainer.appendChild(b); });
-        domG.nextButton.disabled = true;
-    }
-    
-    displayHelp() {
-        const g = this.state.game; g.helpUsedThisTurn = true; g.currentStreak = 0;
-        this.dom.game.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
-        const hD = document.createElement('div'); hD.id='help-text'; hD.innerHTML = `AYUDA: Debes multiplicar ${this.h(g.currentPair[0])} por ${this.h(g.currentPair[1])}.`;
-        this.dom.game.questionBox.appendChild(hD); this.dom.game.helpButton.disabled = true;
-    }
+            var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: QUESTION_TIME, timerId: null } };
+            var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), insignias: document.getElementById('insignias'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
+            var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasGrid: document.getElementById('insigniasGrid'), closeInsigniasButton: document.getElementById('closeInsigniasButton') };
+            var PLAYER_KEYBOARD_LAYOUT = [
+                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I'],
+                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'],
+                ['L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N'],
+                [{ key: 'Shift', span: 2 }, 'M', 'O', 'P', { key: 'Enter', span: 2 }, { key: 'Backspace', span: 1 }]
+            ];
+            var PROFILES_KEY = 'analyzer:profiles';
+            var SETTINGS_KEY = 'analyzer:settings';
+            var PALETTES = { 'CIAN': '#00FFFF', 'FUEGO': '#FF4500', 'JUNGLA': '#228B22', 'GALAXIA': '#8A2BE2' };
+            var PALETTE_KEYS = Object.keys(PALETTES);
+            var MASTERY_COLORS = { 'SUMAS': '#228B22', 'RESTAS': '#00008B', 'MULTIPLICACION': '#8A2BE2', 'DIVISIONES': '#FF4500' };
+            
+            // Nombres Star Trek para las insignias (20 insignias totales)
+            var RANK_NAMES = [
+                '', // índice 0 vacío
+                'Cadete Novato',
+                'Alférez Iniciado',
+                'Teniente Junior',
+                'Teniente Comandante',
+                'Comandante Prime',
+                'Capitán Explorador',
+                'Capitán de Flota',
+                'Comodoro Estelar',
+                'Contralmirante',
+                'Vicealmirante',
+                'Almirante Supremo',
+                'Almirante de Flota',
+                'Gran Almirante',
+                'Comandante de la Flota Estelar',
+                'Mariscal de la Federación',
+                'Canciller Supremo'
+            ];
+            
+            var MASTERY_NAMES = {
+                'SUMAS': 'Maestro de Operaciones Tácticas',
+                'RESTAS': 'Comandante de Defensa Estratégica',
+                'MULTIPLICACION': 'Experto de División Científica',
+                'DIVISIONES': 'Especialista del Cuerpo de Ingeniería'
+            };
+            var BASE_RANK_SHAPES = [ '', `<path d="M10 50 L30 40 L50 50" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 50 L30 40 L50 50 M10 65 L30 55 L50 65" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 40 L30 30 L50 40 M10 55 L30 45 L50 55 M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/><path d="M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,15 38,30 55,30 42,40 47,55 30,45 13,55 18,40 5,30 22,30" fill="%%COLOR%%" transform="translate(0, 15)"/>`, `<path d="M20,65 L10,60 L10,30 L20,25 L40,25 L50,30 L50,60 L40,65 Z" fill="none" stroke="%%COLOR%%" stroke-width="4"/><polygon points="30,35 34,43.5 43,43.5 36,49 38,58 30,53 22,58 24,49 17,43.5 26,43.5" fill="%%COLOR%%"/>`, `<path d="M5,55 L5,25 L30,10 L55,25 L55,55 L30,70 Z" fill="none" stroke="%%COLOR%%" stroke-width="5" stroke-linejoin="round"/> <path d="M15,50 L15,30 L30,20 L45,30 L45,50 L30,60 Z" fill="%%COLOR%%" stroke="#1A1A1A" stroke-width="1"/>`, `<g transform="translate(0, 5)"><path d="M30 20 L50 40 L40 70 L20 70 L10 40 Z" fill="%%COLOR%%" /><path d="M2,40 L15,30 L30,10 L45,30 L58,40 L45,50 L30,70 L15,50 Z" fill="none" stroke="%%COLOR%%" stroke-width="5"/></g>` ];
+            var RANK_SHAPES = (function() { var extendedRanks = BASE_RANK_SHAPES.slice(0); if (extendedRanks.length > 0) { var maxRankInsignia = extendedRanks[extendedRanks.length - 1]; for (var i = 1; i <= 11; i++) { var stars = ''; var starCount = Math.min(i, 5); var yOffset = i > 5 ? 10 : 18; for (var j = 0; j < starCount; j++) { stars += '<text x="' + (30 + (j - (starCount - 1) / 2) * 10) + '" y="' + yOffset + '" font-size="10" fill="#FFD700" text-anchor="middle">★</text>'; } if (i > 5) { var secondRowStarCount = i - 5; for (var k = 0; k < secondRowStarCount; k++) { stars += '<text x="' + (30 + (k - (secondRowStarCount - 1) / 2) * 10) + '" y="' + (yOffset + 12) + '" font-size="10" fill="#FFD700" text-anchor="middle">★</text>'; } } extendedRanks.push(maxRankInsignia + stars); } } return extendedRanks; })();
+            var ESCALADO_DE_DIFICULTAD = { 'SUMAS': [ {min: 1, max: 9}, {min: 5, max: 15}, {min: 10, max: 25}, {min: 20, max: 50}, {min: 40, max: 80}, {min: 60, max: 100}, {min: 80, max: 120}, {min: 90, max: 120} ], 'RESTAS': [ {n1_min: 10, n1_max: 15, n2_min: 1, n2_max: 9}, {n1_min: 15, n1_max: 25, n2_min: 5, n2_max: 14}, {n1_min: 25, n1_max: 40, n2_min: 10, n2_max: 24}, {n1_min: 40, n1_max: 70, n2_min: 15, n2_max: 39}, {n1_min: 70, n1_max: 100, n2_min: 20, n2_max: 69}, {n1_min: 80, n1_max: 120, n2_min: 30, n2_max: 79}, {n1_min: 100, n1_max: 120, n2_min: 50, n2_max: 99}, {n1_min: 100, n1_max: 120, n2_min: 10, n2_max: 99} ], 'MULTIPLICACION': [ {min: 1, max: 4}, {min: 2, max: 5}, {min: 2, max: 7}, {min: 3, max: 8}, {min: 3, max: 10}, {min: 5, max: 11}, {min: 5, max: 12}, {min: 8, max: 12} ], 'DIVISIONES': [ {min: 1, max: 4}, {min: 2, max: 5}, {min: 2, max: 7}, {min: 3, max: 8}, {min: 3, max: 10}, {min: 5, max: 11}, {min: 5, max: 12}, {min: 8, max: 12} ] };
 
-    selectAnswer(e) {
-        const selVal = parseInt(e.currentTarget.dataset.value), g = this.state.game, op = this.state.activeOperator;
-        const opKey = `${g.currentPair[0]}x${g.currentPair[1]}`;
-        if (selVal === g.currentCorrectAnswer) {
-            e.currentTarget.classList.add('correct'); g.currentStreak++;
-            if (!g.helpUsedThisTurn) { g.score += 100 + (g.currentStreak * 10); }
-            if (g.isRepeatQuestion) g.reviewOperations.shift();
-            if (!op.progress.correct.includes(opKey)) op.progress.correct.push(opKey);
-            delete op.progress.incorrect[opKey];
-        } else {
-            e.currentTarget.classList.add('incorrect'); g.currentStreak = 0;
-            if (g.isRepeatQuestion) g.reviewOperations.push(g.reviewOperations.shift());
-            else if (!g.reviewOperations.some(p => p.toString() === g.currentPair.toString())) g.reviewOperations.push(g.currentPair);
-            op.progress.incorrect[opKey] = (op.progress.incorrect[opKey] || 0) + 1;
-        }
-        this.saveOperators();
-        this.dom.game.score.textContent = `PUNTOS: ${g.score}`;
-        this.dom.game.streakCounter.textContent = `[ RACHA: x${g.currentStreak} ]`;
-        this.dom.game.streakCounter.classList.add('pulse');
-        setTimeout(() => this.dom.game.streakCounter.classList.remove('pulse'), 200);
-        Array.from(this.dom.game.answersContainer.children).forEach(b => b.disabled = true);
-        this.dom.game.nextButton.disabled = false; this.dom.game.helpButton.disabled = true;
-    }
+            function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); } catch (e) { console.error('[ERR][STORAGE] FALLO AL GUARDAR CONFIGURACIÓN.', e); } }
+            function loadSettings() { try { var stored = localStorage.getItem(SETTINGS_KEY); if(stored) { state.settings = JSON.parse(stored); } else { state.settings = getDefaultSettings(); } } catch (e) { console.error('[ERR][STORAGE] FALLO AL CARGAR CONFIGURACIÓN. APLICANDO VALORES POR DEFECTO.', e); state.settings = getDefaultSettings(); } }
+            function saveProfilesToStorage() { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(state.profiles)); } catch (e) { console.error('[ERR][STORAGE] FALLO AL GUARDAR PERFILES.', e); } }
+            function createDefaultProfile() { console.log('[STORAGE][INFO] NO SE ENCONTRARON PERFILES. CREANDO PERFIL POR DEFECTO...'); state.profiles = { 'PILOTO_DE_PRUEBAS': getEmptyProfileData() }; saveProfilesToStorage(); }
+            function loadProfilesFromStorage() { try { var storedData = localStorage.getItem(PROFILES_KEY); if (!storedData) { createDefaultProfile(); return; } var d = JSON.parse(storedData); if (typeof d !== 'object' || d === null || Object.keys(d).length === 0) { createDefaultProfile(); return; } var p = {}; var n = Object.keys(d); n.forEach(function(pn) { var op = d[pn] || {}; p[pn] = { solvedQuestions: op.solvedQuestions || { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: op.perfectRuns || { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false } }; }); state.profiles = p; } catch (e) { console.error('[ERR][STORAGE] DATOS DE PERFIL CORRUPTOS. CREANDO NUEVO SET DE PERFILES.', e); createDefaultProfile(); } }
+            
+            function showWindow(windowId) {
+                if (windowId !== 'insignias') { state.previousWindow = state.currentWindow; }
+                for (var id in windows) { windows[id].classList.remove('active'); }
+                windows[windowId].classList.add('active');
+                state.currentWindow = windowId;
+            }
 
-    renderDomainMap() {
-        let html = `<strong>${this.state.activeOperator.name}</strong><div id="domain-map">`;
-        for(let i=1; i<=10; i++){ for(let j=1; j<=10; j++){
-            const key = `${i}x${j}`; let cellClass = 'map-cell';
-            if(this.state.activeOperator.progress.incorrect[key]) cellClass += ' incorrect';
-            else if(this.state.activeOperator.progress.correct.includes(key)) cellClass += ' correct';
-            html += `<div class="${cellClass}" title="${key}">${i}x${j}</div>`;
-        } }
-        html += '</div>'; this.dom.domainMapContainer.innerHTML = html;
-    }
+            function requestFullscreen() { var e = document.documentElement; if (e.requestFullscreen) e.requestFullscreen(); else if (e.mozRequestFullScreen) e.mozRequestFullScreen(); else if (e.webkitRequestFullscreen) e.webkitRequestFullscreen(); else if (e.msRequestFullscreen) e.msRequestFullscreen(); }
+            function handleFullscreenChange() { var isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement; if (!isFs && state.currentWindow !== 'preload' && state.currentWindow !== 'title') { windows.fullscreenOverlay.classList.add('active'); } else { windows.fullscreenOverlay.classList.remove('active'); } }
+            
+            function calculateLayout() {
+                var keyboardWidth = Math.min(window.innerWidth * 0.85, 550);
+                var gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap-m')) || 8;
+                var keySize = (keyboardWidth - (7 * gap)) / 8;
+                ui.virtualKeyboard.style.setProperty('--k', keySize + 'px');
+            }
+            
+            function renderPlayerKeyboard() {
+                ui.virtualKeyboard.innerHTML = '';
+                PLAYER_KEYBOARD_LAYOUT.forEach(function(row) {
+                    row.forEach(function(keyData) {
+                        var key, span;
+                        if (typeof keyData === 'object') { key = keyData.key; span = keyData.span; } else { key = keyData; span = 1; }
+                        var e = document.createElement('button');
+                        e.className = 'interactive-button key';
+                        e.setAttribute('data-key', key);
+                        if (span > 1) { e.style.gridColumn = 'span ' + span; }
+                        var t = key;
+                        if (key === 'Backspace') t = '←';
+                        else if (key === 'Enter') t = '↵';
+                        else if (key === 'Shift') t = '⇧';
+                        
+                        if (state.isShiftActive && key.length === 1) { t = t.toUpperCase(); } 
+                        else if (!state.isShiftActive && key.length === 1) { t = t.toLowerCase(); }
+                        
+                        // MEJORA: Marcar visualmente la tecla Shift cuando está activa
+                        if (key === 'Shift' && state.isShiftActive) {
+                            e.classList.add('shift-active');
+                        }
+                        
+                        e.textContent = t;
+                        ui.virtualKeyboard.appendChild(e);
+                    });
+                });
+            }
 
-    endGame() {
-        const g = this.state.game; let msg = `SESIÓN COMPLETA. PUNTAJE FINAL: ${g.score}.`;
-        if (g.reviewOperations.length > 0) { msg += `<div class="final-review"><strong>OPERACIONES PARA REPASAR:</strong><br>${g.reviewOperations.map(p => `<span>${p[0]}x${p[1]}</span>`).join('')}</div>`; } 
-        else { msg += `<div class="final-review"><strong>DOMINIO TOTAL.</strong></div>`; }
-        this.dom.game.questionBox.innerHTML = msg; this.dom.game.header.style.display = 'none';
-        this.dom.game.nextButton.textContent = '[ VER PROGRESO ]';
-        this.dom.game.nextButton.onclick = () => {
-            this.dom.game.nextButton.textContent = '[ SIGUIENTE ]'; this.dom.game.nextButton.onclick = () => this.generateQuestion();
-            this.renderIdentityScreen(); this.showScreen('identity-selection-screen');
-        };
-    }
-}
-document.addEventListener('DOMContentLoaded', () => { new SystemCore(); });
-</script>
-</body>
-</html>
+            function renderProfiles() { ui.profilesList.innerHTML = ''; Object.keys(state.profiles).forEach(function(pn) { var li = document.createElement('li'); li.className = 'profile-entry'; var pb = document.createElement('button'); pb.className = 'interactive-button profile-button'; pb.textContent = pn; pb.setAttribute('data-profile-name', pn); var db = document.createElement('button'); db.className = 'delete-button'; db.textContent = 'X'; db.setAttribute('data-profile-name', pn); li.appendChild(pb); li.appendChild(db); ui.profilesList.appendChild(li); }); }
+            function createInsigniaSVG(shape, color) { var base = `<svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 H60 V75 L30 90 L0 75 Z" fill="#141414" stroke="#0A0A0A" stroke-width="2"/>`; var coloredShape = shape.replace(/%%COLOR%%/g, color); return base + coloredShape + '</svg>'; }
+            function renderProfileRank() { if (!state.activeProfile) return; var profile = state.profiles[state.activeProfile]; var totalSolved = 0; var categories = Object.keys(profile.solvedQuestions); for (var i = 0; i < categories.length; i++) { totalSolved += profile.solvedQuestions[categories[i]].length; } var rankIndex = Math.floor(totalSolved / 5); rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1); var insigniaShape = RANK_SHAPES[rankIndex]; ui.profileDisplayName.textContent = state.activeProfile; if(insigniaShape) { ui.rankInsigniaDisplay.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700'); } else { ui.rankInsigniaDisplay.innerHTML = ''; } }
+            function populateLevelGrid() { 
+                ui.levelGrid.innerHTML = ''; 
+                if (!state.activeProfile) return; 
+                var profile = state.profiles[state.activeProfile]; 
+                Object.keys(ESCALADO_DE_DIFICULTAD).forEach(function(d) { 
+                    var b = document.createElement('button'); 
+                    b.className = 'interactive-button'; 
+                    b.setAttribute('data-difficulty', d); 
+                    var content = document.createElement('div'); 
+                    content.className = 'level-button-content'; 
+                    var solvedInCategory = profile.solvedQuestions[d] ? profile.solvedQuestions[d].length : 0; 
+                    var masteryRankIndex = Math.floor(solvedInCategory / 5); 
+                    masteryRankIndex = Math.min(masteryRankIndex, RANK_SHAPES.length - 1); 
+                    var masteryShape = RANK_SHAPES[masteryRankIndex]; 
+                    var masteryInsigniaContainer = document.createElement('div'); 
+                    masteryInsigniaContainer.className = 'mastery-insignia'; 
+                    if (masteryShape) { 
+                        masteryInsigniaContainer.innerHTML = createInsigniaSVG(masteryShape, MASTERY_COLORS[d]); 
+                    } 
+                    
+                    // Crear wrapper para información con dos líneas
+                    var infoWrapper = document.createElement('div');
+                    infoWrapper.className = 'level-info-wrapper';
+                    
+                    var categoryName = document.createElement('div'); 
+                    categoryName.className = 'level-category'; 
+                    categoryName.textContent = d; 
+                    
+                    var starfleetName = document.createElement('div');
+                    starfleetName.className = 'level-starfleet-name';
+                    var rankName = RANK_NAMES[masteryRankIndex] || '';
+                    starfleetName.textContent = rankName;
+                    
+                    infoWrapper.appendChild(categoryName);
+                    infoWrapper.appendChild(starfleetName);
+                    
+                    var numCubes = solvedInCategory % 5; 
+                    var cubesContainer = document.createElement('div'); 
+                    cubesContainer.className = 'progress-cubes-container'; 
+                    for (var i = 0; i < 4; i++) { 
+                        var cube = document.createElement('div'); 
+                        cube.className = 'progress-cube' + (i < numCubes ? ' filled' : ''); 
+                        cubesContainer.appendChild(cube); 
+                    } 
+                    content.appendChild(masteryInsigniaContainer); 
+                    content.appendChild(infoWrapper); 
+                    content.appendChild(cubesContainer); 
+                    b.appendChild(content); 
+                    ui.levelGrid.appendChild(b); 
+                }); 
+            }
+            function renderInsignias() {
+                ui.insigniasGrid.innerHTML = '';
+                var docFrag = document.createDocumentFragment();
+                RANK_SHAPES.forEach(function(shape, index) {
+                    if(index === 0) return;
+                    var item = document.createElement('div'); item.className = 'insignia-item';
+                    var svgContainer = document.createElement('div'); svgContainer.className = 'insignia-item-svg';
+                    svgContainer.innerHTML = createInsigniaSVG(shape, '#FFD700');
+                    var title = document.createElement('div'); title.className = 'insignia-item-title';
+                    title.textContent = RANK_NAMES[index] || 'RANGO ' + index;
+                    item.appendChild(svgContainer); item.appendChild(title); docFrag.appendChild(item);
+                });
+                Object.keys(MASTERY_COLORS).forEach(function(category){
+                    var item = document.createElement('div'); item.className = 'insignia-item';
+                    var svgContainer = document.createElement('div'); svgContainer.className = 'insignia-item-svg';
+                    svgContainer.innerHTML = createInsigniaSVG(RANK_SHAPES[RANK_SHAPES.length - 1], MASTERY_COLORS[category]);
+                    var title = document.createElement('div'); title.className = 'insignia-item-title';
+                    title.textContent = MASTERY_NAMES[category] || 'MAESTRÍA ' + category;
+                    item.appendChild(svgContainer); item.appendChild(title); docFrag.appendChild(item);
+                });
+                ui.insigniasGrid.appendChild(docFrag);
+            }
+            function applyPalette(index) { if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; var key = PALETTE_KEYS[index]; if (key) { document.body.style.setProperty('--color-accent-primary', PALETTES[key]); } }
+            function updateSoundToggleButtons() { var text = 'SONIDO: ' + (state.settings.soundEnabled ? 'ON' : 'OFF'); document.querySelectorAll('.sound-toggle-button').forEach(function(btn) { btn.textContent = text; }); }
+            function renderPaletteSubMenus() { document.querySelectorAll('.palette-submenu').forEach(function(submenu) { submenu.innerHTML = ''; if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; PALETTE_KEYS.forEach(function(key, index) { var button = document.createElement('button'); button.textContent = key; button.setAttribute('data-palette-index', index); if (typeof PALETTES !== 'undefined' && PALETTES[key]) { button.style.color = PALETTES[key]; } submenu.appendChild(button); }); }); }
+            
+            var PRNG = { seed: function(s) { state.quiz.prngState = s >>> 0; }, next: function() { var x = state.quiz.prngState; x ^= x << 13; x ^= x >> 17; x ^= x << 5; state.quiz.prngState = x; return (x >>> 0) / 0x100000000; } };
+
+            function numberToLiteral(n, gender) {
+                var unidades = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+                var especiales = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
+                var decenas = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+                if (n === 1) { return gender === 'f' ? 'una' : 'un'; }
+                if (n >= 0 && n < 10) { return unidades[n]; }
+                if (n >= 10 && n < 20) { return especiales[n - 10]; }
+                if (n >= 20 && n < 30) { return n === 20 ? 'veinte' : 'veinti' + unidades[n-20]; }
+                if (n >= 30 && n < 100) { var d = Math.floor(n / 10); var u = n % 10; return decenas[d] + (u > 0 ? ' y ' + unidades[u] : ''); }
+                if (n === 100) { return 'cien'; }
+                if (n > 100 && n < 200) { return 'ciento ' + numberToLiteral(n - 100, gender); }
+                return String(n);
+            }
+
+            /**
+             * Retorna la forma gramatical correcta de un sustantivo según el número.
+             * @param {number} num - El número que determina singular o plural
+             * @param {object} sujeto - El objeto sujeto con formas singular (s) y plural (p)
+             * @param {boolean} conArticulo - Si debe incluir artículo (un/una para 1)
+             * @returns {string} La forma correcta con o sin artículo
+             */
+            function getGrammaticalForm(num, sujeto, conArticulo = false) {
+                if (num === 1) {
+                    if (conArticulo) {
+                        var articulo = sujeto.g === 'f' ? 'una' : 'un';
+                        return articulo + ' ' + sujeto.s;
+                    }
+                    return sujeto.s;
+                }
+                return sujeto.p;
+            }
+
+            /**
+             * Convierte un número y sustantivo a su representación literal con concordancia.
+             * Ejemplo: (1, {s: "flor", p: "flores", g: "f"}) => "1 flor"
+             * Ejemplo: (5, {s: "flor", p: "flores", g: "f"}) => "5 flores"
+             * @param {number} num - El número
+             * @param {object} sujeto - El objeto sujeto
+             * @param {boolean} usarLiteral - Si usar palabra literal del número o dígito
+             * @returns {string} Representación con concordancia correcta
+             */
+            function numberWithSubject(num, sujeto, usarLiteral = false) {
+                var numeroStr = usarLiteral ? numberToLiteral(num, sujeto.g) : String(num);
+                var sustantivo = getGrammaticalForm(num, sujeto, false);
+                return numeroStr + ' ' + sustantivo;
+            }
+
+            var QuestionGenerator = {
+                thematicPacks: [ { tema: "PARQUE", sujetos: [{p: "flores", s: "flor", g: "f", cont: {p:"ramos", s:"ramo"}}], personajes: ["Sofía", "Mateo"], verbos: {gain: "encontró", loss: "perdió"} }, { tema: "FIESTA", sujetos: [{p: "globos", s: "globo", g: "m", cont: {p:"grupos", s:"grupo"}}, {p: "caramelos", s: "caramelo", g: "m", cont: {p:"bolsas", s:"bolsa"}}], personajes: ["Leo", "Valentina"], verbos: {gain: "recibió", loss: "repartió"} }, { tema: "TIENDA", sujetos: [{p: "juguetes", s: "juguete", g: "m", cont: {p:"cajas", s:"caja"}}, {p: "libros", s: "libro", g: "m", cont: {p:"pilas", s:"pila"}}], personajes: ["Laura", "Daniel"], verbos: {gain: "compró", loss: "vendió"} } ],
+                templates: {
+                    'SUMAS_2': ["{personaje} estaba coleccionando {sujeto_p} en el parque y ya tenía {n1}. Mientras caminaba, un amigo le regaló {n2} más. ¿Cuál es el número total de {sujeto_p} que tiene ahora?","En un estante de la tienda había {n1} {sujeto_p}. Un repartidor llegó y colocó {n2} {sujeto_p} adicionales. ¿Cuántos {sujeto_p} hay en total en el estante?","{personaje} fue a la tienda y {verbo_gain} {n1} {sujeto_p}. Al día siguiente, volvió y {verbo_gain} {n2} {sujeto_p} más. ¿Cuántos {sujeto_p} {verbo_gain} en total?","En un jardín, {personaje} plantó {n1} {sujeto_p}. Su vecino plantó {n2} {sujeto_p} al lado. ¿Cuántas {sujeto_p} hay ahora entre los dos jardines?","Un equipo de construcción tiene {n1} ladrillos. Si reciben una nueva entrega con {n2} ladrillos más, ¿cuál es el total de ladrillos disponibles?","Para una receta, {personaje} necesita {n1} huevos y {n2} manzanas. ¿Cuántos ingredientes principales necesita en total?","Un autobús comienza su ruta con {n1} pasajeros. En la primera parada, suben {n2} pasajeros nuevos. ¿Cuántas personas viajan ahora en el autobús?","{personaje} tiene una colección de {n1} estampillas. Por su cumpleaños, le regalan un álbum con {n2} estampillas nuevas. ¿Cuántas estampillas tiene ahora en su colección?","En una granja hay {n1} gallinas. El granjero compra {n2} gallinas más para ampliar el gallinero. ¿Cuántas gallinas hay en total en la granja?","Una biblioteca tiene {n1} {sujeto_p} de ciencia ficción. Si adquieren una nueva colección de {n2} {sujeto_p} del mismo género, ¿cuál es el nuevo total de {sujeto_p} de ciencia ficción?","En un bol de frutas hay {n1} {sujeto_p} rojas y {n2} verdes. ¿Cuántas {sujeto_p} hay en total en el bol?","{personaje} caminó {n1} kilómetros por la mañana y {n2} kilómetros por la tarde. ¿Cuántos kilómetros caminó en todo el día?","Un videojuego tiene {n1} niveles principales. Una nueva expansión añade {n2} niveles extra. ¿Cuántos niveles tiene el juego ahora?","En un estuche hay {n1} lápices de colores. {personaje} guarda {n2} lápices más que encontró. ¿Cuántos lápices hay ahora en el estuche?","{personaje} leyó {n1} páginas de un libro el lunes y {n2} páginas el martes. ¿Cuántas páginas ha leído en esos dos días?","Un equipo de fútbol marcó {n1} goles en el primer tiempo y {n2} goles en el segundo. ¿Cuántos goles marcaron en todo el partido?","Hay {n1} pájaros en la rama de un árbol. Llegan volando {n2} pájaros más y se posan en la misma rama. ¿Cuántos pájaros hay ahora?","La temperatura por la mañana era de {n1} grados. Al mediodía, la temperatura subió {n2} grados. ¿Cuál es la nueva temperatura?","{personaje} tiene {n1} cromos repetidos. Si intercambia con un amigo y consigue {n2} cromos que no tenía, ¿cuántos cromos tiene al final de su colección?","Un pastel se corta en {n1} trozos para una fiesta. Al ver que no es suficiente, cortan otro pastel en {n2} trozos. ¿Cuántos trozos de pastel hay disponibles en total?", "En un videojuego, {personaje} encontró un cofre con {n1} gemas y luego venció a un enemigo que le dio {n2} gemas adicionales. ¿Cuántas gemas obtuvo en total?","Una historia cuenta que un dragón dormía sobre {n1} monedas de oro. Un aventurero añadió {n2} monedas más al tesoro. ¿Sobre cuántas monedas duerme ahora el dragón?","La misión espacial Apolo tenía {n1} objetivos principales. La misión Artemis añadió {n2} nuevos objetivos a la exploración lunar. ¿Cuántos objetivos hay en total?","Un sistema informático procesó {n1} peticiones en un segundo y {n2} peticiones en el siguiente. ¿Cuál fue el total de peticiones procesadas en esos dos segundos?","En una excavación arqueológica se encontraron {n1} artefactos en el primer nivel y {n2} en un nivel más profundo. ¿Cuántos artefactos se han descubierto en total?"],
+                    'SUMAS_3': ["En una excursión al parque, Mateo encontró {n1} piedras lisas. Más tarde, recogió {n2} piedras brillantes y justo antes de irse, su amiga le regaló {n3} de colores. ¿Cuántas piedras juntó Mateo en total?","Una tienda de juguetes recibió una caja con {n1} carritos el lunes. El miércoles, llegó un segundo pedido con {n2} carritos y el viernes compraron {n3} más. ¿Cuántos carritos nuevos llegaron en toda la semana?","Laura está jugando a un videojuego. En la primera partida consiguió {n1} puntos, en la segunda {n2} puntos y en la tercera rompió su récord con {n3} puntos. ¿Cuántos puntos consiguió sumando las tres partidas?","{personaje} horneó {n1} galletas de chocolate para sus amigos, {n2} de avena para su familia y {n3} de vainilla para una fiesta. ¿Cuántas galletas horneó en total?","Para una campaña de donación, una biblioteca recibió {n1} {sujeto_p} de misterio, {n2} de fantasía y {n3} de historia de diferentes donantes. ¿Cuántos {sujeto_p} nuevos se donaron en total?","Un granjero cosechó {n1} sacos de manzanas, {n2} sacos de peras y {n3} sacos de naranjas en un día. ¿Cuántos sacos de fruta cosechó en total?","{personaje} tiene {n1} monedas en su bolsillo izquierdo, {n2} en el bolsillo derecho y encontró {n3} más en su alcancía. ¿Cuánto dinero tiene en total?","Para construir una torre de juguete, se usaron {n1} bloques rojos en la base, {n2} bloques azules en el medio y {n3} bloques verdes en la cima. ¿Cuántos bloques tiene la torre?","En un gran acuario hay {n1} peces dorados, {n2} peces payaso y {n3} peces ángel en el mismo tanque. ¿Cuántos de estos tres tipos de peces hay en total?","Un tren de cercanías sale con {n1} pasajeros. En la primera parada suben {n2} personas y en la segunda parada suben {n3} más. ¿Cuántos pasajeros viajan ahora en el tren?","En el carrito del supermercado, {personaje} puso {n1} refrescos, {n2} zumos y {n3} botellas de agua. ¿Cuántas bebidas compró en total?","Un jardín botánico tiene {n1} tipos de rosas, {n2} tipos de tulipanes y {n3} tipos de margaritas. ¿Cuántos tipos de estas flores hay en el jardín?","Para hacer un disfraz, {personaje} usó {n1} metros de tela, {n2} metros de cinta decorativa y {n3} metros de encaje. ¿Cuántos metros de material usó en total?","En un safari fotográfico, un explorador vio {n1} monos, {n2} leones y {n3} elefantes. ¿Cuántos de estos tres animales vio en total?","Una pizzería vendió {n1} pizzas de queso por la mañana, {n2} de pepperoni por la tarde y {n3} vegetarianas por la noche. ¿Cuántas pizzas vendió en todo el día?","{personaje} observó {n1} estrellas fugaces el viernes, {n2} el sábado y {n3} el domingo durante una lluvia de meteoros. ¿Cuántas vio en todo el fin de semana?","Un paquete de Amazon contiene {n1} {sujeto_p}, otro paquete contiene {n2} y un tercero que acaba de llegar tiene {n3}. ¿Cuántos {sujeto_p} hay si se juntan todos?","Para decorar una fiesta, se inflaron {n1} {sujeto_p} rojos, {n2} azules y {n3} amarillos. ¿Cuántos {sujeto_p} se usaron en total para la decoración?","En un videojuego, {personaje} encontró un cofre con {n1} pociones de vida, otro con {n2} de maná y un tercero con {n3} de fuerza. ¿Cuántas pociones tiene ahora?","{personaje} escribió {n1} emails por la mañana, respondió {n2} por la tarde y envió {n3} más por la noche. ¿Cuántos emails gestionó en todo el día?", "En una carrera de relevos, el primer corredor corrió {n1} metros, el segundo {n2} metros y el último corredor completó la carrera con {n3} metros. ¿Cuál fue la distancia total de la carrera?","Un coleccionista compró un lote de cómics con {n1} de superhéroes, {n2} de ciencia ficción y {n3} de manga. ¿Cuántos cómics compró en total?","Para un proyecto de ciencias, se mezclaron {n1} mililitros de una sustancia, {n2} de otra y {n3} de una tercera. ¿Cuál es el volumen total de la mezcla?","Una banda de música tiene {n1} canciones en su primer álbum, {n2} en el segundo y están grabando {n3} nuevas para el tercero. ¿Cuántas canciones tendrán en total?","En tres días de festival, un puesto de comida vendió {n1} perritos calientes el primer día, {n2} el segundo y {n3} el tercero. ¿Cuántos vendieron en total?",
+                        "{personaje} está preparando {n1} bolsas para una excursión con {n2} bocadillos en cada una, y luego añade {n3} {sujeto_p} extra. ¿Cuántos {sujeto_p} hay en total?",
+                        "En un acuario, hay {n1} peceras con {n2} peces cada una, y en una pecera especial hay {n3} peces tropicales. ¿Cuántos peces hay en total?",
+                        "Un arquitecto diseña {n1} edificios con {n2} ventanas cada uno, y un último edificio con {n3} ventanas panorámicas. ¿Cuántas ventanas hay en total?",
+                        "Para una competencia, {personaje} fabricó {n1} aviones de papel, su hermano hizo {n2} y su prima hizo {n3}. ¿Cuántos aviones tienen entre los tres?",
+                        "En tres estantes de una vitrina hay {n1} {sujeto_p} en el primero, {n2} en el segundo y {n3} en el tercero. ¿Cuántos {sujeto_p} hay en total en la vitrina?"],
+                    'RESTAS': ["{personaje} tenía {n1} {sujeto_p} en su colección, pero accidentalmente {verbo_loss} {n2}. ¿Cuántos le quedan ahora?","Un árbol tenía {n1} {sujeto_p} maduras. Por la tarde, el viento sopló fuerte e hizo caer {n2} de ellas. ¿Cuántas {sujeto_p} permanecen en el árbol?","Sobre la mesa había {n1} galletas recién horneadas. {personaje} y sus amigos se comieron {n2} mientras estaban calientes. ¿Cuántas galletas quedaron en el plato?","{personaje} disponía de {n1} {sujeto_p} nuevos para un proyecto escolar. Si ya ha utilizado {n2}, ¿cuántos {sujeto_p} le quedan disponibles?","Un estacionamiento con capacidad para {n1} coches está casi lleno. Si {n2} coches se van, ¿cuántos coches quedan estacionados?","Para una fiesta, {personaje} infló {n1} {sujeto_p}. Durante los juegos, lamentablemente se pincharon {n2}. ¿Cuántos {sujeto_p} inflados le quedan?","De un total de {n1} tareas para la semana, {personaje} ya ha completado {n2} de ellas. ¿Cuántas tareas le faltan por completar?","Una tienda de videojuegos tenía {n1} copias de un nuevo lanzamiento. Durante el fin de semana de estreno, vendieron {n2} copias. ¿Cuántos videojuegos quedan en el inventario?","{personaje} había ahorrado {n1} monedas en su alcancía. Si tuvo que gastar {n2} monedas en un dulce, ¿cuántas monedas le quedan?","Un tanque de agua para riego contenía {n1} litros. Si se utilizaron {n2} litros para regar todo el jardín, ¿cuánta agua queda en el tanque?","En una carrera de {n1} vueltas, un piloto ya ha completado {n2} de ellas. ¿Cuántas vueltas le faltan para terminar la carrera?","Una estantería de una biblioteca contenía {n1} {sujeto_p}. Si los usuarios han tomado prestados {n2}, ¿cuántos {sujeto_p} quedan en la estantería?","De una pizza familiar cortada en {n1} porciones, los comensales se comen {n2} porciones. ¿Cuántas porciones de pizza quedan?","{personaje} empezó un videojuego con {n1} vidas. Tras una fase difícil, perdió {n2} vidas. ¿Con cuántas vidas continúa jugando?","La batería de un dispositivo estaba cargada al {n1}%. Después de ver una película, la carga bajó un {n2}%. ¿Qué porcentaje de batería queda?","Un libro tiene {n1} páginas en total. Si {personaje} ya ha leído {n2} páginas, ¿cuántas le faltan por leer para terminarlo?","Se esperaban {n1} invitados a una fiesta de cumpleaños. A última hora, {n2} de ellos cancelaron. ¿Cuántos invitados asistieron finalmente?","{personaje} fue de compras con {n1} euros en su cartera. Si pagó {n2} euros por una camiseta, ¿cuánto dinero le queda?","Un vuelo tiene una duración total de {n1} minutos. Si ya han pasado {n2} minutos de vuelo, ¿cuántos minutos faltan para aterrizar?",
+                        "En un videojuego, {personaje} tenía {n1} vidas acumuladas. Después de enfrentar un jefe final, perdió {n2} vidas. ¿Cuántas vidas le quedan?",
+                        "Un restaurante preparó {n1} platos para un evento. Al final de la noche, se habían servido {n2} platos. ¿Cuántos platos quedaron sin servir?",
+                        "Para una mudanza, había {n1} cajas empacadas. Si ya se transportaron {n2} cajas al nuevo hogar, ¿cuántas cajas quedan por transportar?",
+                        "Un programador tenía {n1} líneas de código en su proyecto. Después de optimizar, eliminó {n2} líneas redundantes. ¿Cuántas líneas de código tiene ahora?",
+                        "{personaje} descargó {n1} aplicaciones en su teléfono. Después de revisar, decidió desinstalar {n2} que no usaba. ¿Cuántas aplicaciones conservó?",
+                        "En una granja avícola había {n1} huevos recolectados. Si {n2} de ellos se vendieron en el mercado local, ¿cuántos huevos quedan en la granja?",
+                        "Un museo tenía {n1} {sujeto_p} en exhibición. Si prestaron {n2} a otro museo para una exposición temporal, ¿cuántos {sujeto_p} quedan en el museo original?",
+                        "Durante una tormenta, un árbol tenía {n1} frutas maduras. El viento fuerte hizo caer {n2} de ellas. ¿Cuántas frutas quedaron colgando del árbol?",
+                        "Un científico tenía {n1} muestras para analizar. Después de procesar {n2} muestras en el laboratorio, ¿cuántas muestras le quedan por analizar?",
+                        "{personaje} había guardado {n1} monedas en diferentes cofres. Si donó {n2} monedas para una causa benéfica, ¿cuántas monedas conserva?","En un rebaño había {n1} ovejas. El pastor tuvo que vender {n2} ovejas en el mercado. ¿Cuántas ovejas le quedan en el rebaño?"],
+                    'MULTIPLICACION': ["{personaje} está organizando su colección en {n1} {cont_p}. Si en cada una coloca {n2} {sujeto_p}, ¿cuántos {sujeto_p} tiene en total?","Una clase de arte necesita {n1} {cont_p} para un mural. Si cada {cont_s} debe contener {n2} {sujeto_p} de colores, ¿cuántos {sujeto_p} se requieren en total?","Un edificio de oficinas tiene {n1} pisos, y en cada piso se han instalado {n2} ventanas. ¿Cuántas ventanas tiene el edificio en su totalidad?","Cada paquete de galletas que {verbo_gain} {personaje} contiene {n2} galletas. Si compra {n1} paquetes, ¿cuántas galletas tiene en total?","En una granja hay {n1} corrales y en cada corral viven exactamente {n2} cerdos. ¿Cuántos cerdos hay en toda la granja?","Un álbum de fotos familiar tiene {n1} páginas. Si en cada página se pueden colocar {n2} fotos, ¿cuál es la capacidad total de fotos del álbum?","{personaje} está diseñando un huerto con {n1} filas. Si en cada fila decide plantar {n2} semillas de tomate, ¿cuántas semillas plantará en total?","En una exhibición de coches, hay {n1} vehículos y cada uno tiene {n2} ruedas. ¿Cuántas ruedas hay en toda la exhibición?","Cada caja de lápices nueva contiene {n2} lápices de colores. Si una escuela compra {n1} cajas para sus estudiantes, ¿cuántos lápices ha comprado en total?","{personaje} se ha propuesto leer {n2} páginas de un libro cada día. Si mantiene este ritmo durante {n1} días, ¿cuántas páginas habrá leído en total?","Un tablero de ajedrez se compone de {n1} filas y {n2} columnas. ¿Cuántas casillas tiene el tablero en total?","Si una araña común tiene {n2} patas, ¿cuántas patas tendrían {n1} arañas juntas?","En un restaurante, cada menú del día cuesta {n2} euros. Un grupo de {n1} amigos pide un menú cada uno. ¿Cuál será el coste total de su comida?","Si una hora se compone de {n2} minutos, ¿cuántos minutos hay en un periodo de {n1} horas?","Un cine pequeño tiene {n1} filas de butacas. Si cada fila tiene {n2} asientos, ¿cuál es el aforo total del cine?","{personaje} camina a un ritmo constante de {n1} pasos por minuto. ¿Cuántos pasos dará si camina durante {n2} minutos?","En un videojuego, cada {sujeto_s} dorado que recoges vale {n2} puntos. Si consigues {n1} de ellos, ¿cuántos puntos obtienes?","Un panadero prepara {n1} bandejas de magdalenas para vender. Si en cada bandeja hornea {n2} magdalenas, ¿cuántas ha hecho en total?","Un teclado de ordenador estándar tiene aproximadamente {n1} hileras de teclas con {n2} teclas en cada una. ¿Cuántas teclas tiene en total?","Si para ensamblar cada {sujeto_s} se necesitan {n2} tornillos, ¿cuántos tornillos se necesitarán en total para fabricar {n1} {sujeto_p}?",
+                        "En una competencia de robótica, cada equipo de {n1} participantes construyó {n2} robots. ¿Cuántos robots se construyeron en total?",
+                        "{personaje} organiza su biblioteca digital en {n1} carpetas, y en cada carpeta guarda {n2} archivos. ¿Cuántos archivos tiene en total?",
+                        "Un satélite orbita la Tierra {n1} veces al día. Si cada órbita toma {n2} minutos, ¿cuántos minutos orbita el satélite en un día?",
+                        "Para una campaña publicitaria, se imprimen {n1} lotes de pósters, con {n2} pósters en cada lote. ¿Cuántos pósters se imprimen en total?",
+                        "Un edificio tiene {n1} ascensores, y cada ascensor puede transportar {n2} personas. ¿Cuántas personas pueden viajar simultáneamente en todos los ascensores?",
+                        "En un videojuego de estrategia, {personaje} controla {n1} bases y en cada base entrena {n2} soldados. ¿Cuántos soldados tiene en total?",
+                        "Una cadena de tiendas tiene {n1} sucursales, y cada sucursal emplea a {n2} trabajadores. ¿Cuántos empleados trabajan en toda la cadena?",
+                        "Un compositor escribe {n1} canciones, y cada canción tiene {n2} versos. ¿Cuántos versos escribió en total?",
+                        "Para un experimento científico, se necesitan {n1} matraces, y en cada matraz se colocan {n2} mililitros de solución. ¿Cuántos mililitros se usan en total?",
+                        "Un tren de carga lleva {n1} vagones, y cada vagón transporta {n2} toneladas de mercancía. ¿Cuántas toneladas transporta el tren completo?"],
+                    'DIVISIONES': ["{personaje} quiere repartir equitativamente {total} {sujeto_p} entre {n1} amigos. ¿Cuántos {sujeto_p} recibirá cada uno?","Una fábrica empaqueta {total} {sujeto_p} en {cont_p}. Si en cada {cont_s} caben {n2} {sujeto_p}, ¿cuántas {cont_p} se necesitarán?","Un grupo de {n1} amigos encontró un tesoro con {total} canicas. Si se reparten las canicas en partes iguales, ¿cuántas canicas le corresponden a cada amigo?","{personaje} tiene {total} pegatinas para su colección y un álbum. Si en cada página del álbum caben {n2} pegatinas, ¿cuántas páginas podrá llenar por completo?","Un profesor tiene {total} lápices nuevos para repartir de forma equitativa entre los {n1} estudiantes de su clase. ¿Cuántos lápices le dará a cada estudiante?","Para un juego de mesa, se deben repartir {total} cartas entre {n1} jugadores. ¿Cuántas cartas le corresponden a cada jugador para empezar la partida?","Una cuerda que mide {total} metros de largo debe cortarse en trozos de exactamente {n2} metros cada uno. ¿Cuántos trozos iguales se pueden obtener?","Para un evento, se deben organizar {total} sillas en el patio, formando filas de {n2} sillas cada una. ¿Cuántas filas completas se podrán formar?","{personaje} horneó {total} galletas. Si quiere guardarlas en bolsas para regalar, y en cada bolsa pone {n2} galletas, ¿cuántas bolsas necesitará?","Un agricultor recolectó {total} manzanas de sus árboles y las quiere empaquetar en cajas que contienen {n2} manzanas cada una. ¿Cuántas cajas podrá llenar?","Se deben transportar {total} pasajeros en una serie de botes, cada uno con capacidad para {n1} personas. ¿Cuántos botes se necesitan para transportar a todos?","Un libro de {total} páginas debe ser leído en {n1} días. Para terminarlo a tiempo, ¿cuántas páginas se deben leer por día en promedio?","Con {total} flores recién cortadas se quieren hacer ramos de {n2} flores cada uno. ¿Cuántos ramos idénticos se pueden hacer?","Un premio de lotería de {total} euros se reparte en partes iguales entre {n1} ganadores. ¿Cuánto dinero recibe cada ganador?","Una jarra con {total} litros de refresco se quiere servir en vasos de {n2} litros de capacidad. ¿Cuántos vasos se pueden llenar por completo?","Un programador necesita escribir un programa de {total} líneas de código en {n1} horas. ¿Cuántas líneas de código debe escribir por hora en promedio?","Una baraja española de {total} cartas se divide para un juego en montones de {n2} cartas. ¿Cuántos montones se pueden formar?","Una granja avícola recoge {total} huevos y los coloca en cartones con capacidad para {n2} huevos. ¿Cuántos cartones se necesitan para empaquetar todos los huevos?","Un camino de {total} kilómetros se divide en {n1} etapas de igual longitud para una carrera. ¿Cuántos kilómetros tiene cada etapa?","Una película tiene una duración de {total} minutos. Si la cadena de televisión la divide en {n2} bloques iguales para meter anuncios, ¿cuánto dura cada bloque de película?",
+                        "{personaje} tiene {total} sellos postales para organizar en {n1} álbumes. ¿Cuántos sellos irán en cada álbum si los reparte equitativamente?",
+                        "Una empresa de catering debe servir {total} porciones de comida usando bandejas que contienen {n2} porciones cada una. ¿Cuántas bandejas necesitarán?",
+                        "Un jardinero tiene {total} plantas para colocar en macetas. Si cada maceta puede albergar {n2} plantas, ¿cuántas macetas necesita?",
+                        "Para un torneo de ajedrez, hay {total} participantes que deben formar equipos de {n1} jugadores. ¿Cuántos equipos se pueden formar?",
+                        "Una fábrica produce {total} unidades de un producto al día. Si cada caja contiene {n2} unidades, ¿cuántas cajas se llenan diariamente?",
+                        "Un contador tiene {total} facturas para archivar en carpetas. Si cada carpeta puede contener {n2} facturas, ¿cuántas carpetas utilizará?",
+                        "{personaje} coleccionó {total} chapas conmemorativas y quiere exhibirlas en vitrinas. Si cada vitrina muestra {n2} chapas, ¿cuántas vitrinas necesita?",
+                        "Una compañía aérea debe transportar {total} pasajeros usando aviones con capacidad para {n1} personas. ¿Cuántos vuelos se necesitan?",
+                        "Un chef preparó {total} porciones de postre para servir en platos. Si cada plato lleva {n2} porciones, ¿cuántos platos preparará?",
+                        "Una editorial imprimió {total} páginas de un manuscrito. Si cada capítulo tiene {n1} páginas, ¿cuántos capítulos tiene el manuscrito?"]
+                },
+                getRandomElement: function(arr) { return arr[Math.floor(PRNG.next() * arr.length)]; },
+                getRandomNumber: function(min, max) { return Math.floor(PRNG.next() * (max - min + 1)) + min; },
+                populateTemplate: function(template, context) { var populated = template; for (var key in context) { var regex = new RegExp('{' + key + '}', 'g'); populated = populated.replace(regex, context[key]); } return populated; },
+                generateOptions: function(correctAnswer) {
+                    var options = [correctAnswer];
+                    while (options.length < 4) { var offset = this.getRandomNumber(1, 10) * (PRNG.next() > 0.5 ? 1 : -1); var distractor = correctAnswer + offset; if (options.indexOf(distractor) === -1 && distractor >= 0 && distractor !== correctAnswer) { options.push(distractor); } }
+                    for (var i = options.length - 1; i > 0; i--) { var j = Math.floor(PRNG.next() * (i + 1)); var temp = options[i]; options[i] = options[j]; options[j] = temp; }
+                    return options;
+                },
+                createQuestion: function(type) {
+                    var profile = state.activeProfile ? state.profiles[state.activeProfile] : null;
+                    var solvedInCategory = profile ? (profile.solvedQuestions[type] ? profile.solvedQuestions[type].length : 0) : 0;
+                    var masteryRankIndex = Math.floor(solvedInCategory / 5);
+                    var difficultyConfig = ESCALADO_DE_DIFICULTAD[type][Math.min(masteryRankIndex, ESCALADO_DE_DIFICULTAD[type].length - 1)];
+                    var pack = this.getRandomElement(this.thematicPacks);
+                    var sujeto = this.getRandomElement(pack.sujetos);
+                    var personaje = this.getRandomElement(pack.personajes);
+                    var n1, n2, n3, correctAnswer, total, template, templateArray;
+                    var context = {};
+
+                    if (type === 'SUMAS') {
+                        if (solvedInCategory >= 20) {
+                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n3 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
+                            correctAnswer = n1 + n2 + n3;
+                            context.n3 = (PRNG.next() > 0.6) ? numberToLiteral(n3, sujeto.g) : n3;
+                            templateArray = this.templates['SUMAS_3'];
+                        } else {
+                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
+                            correctAnswer = n1 + n2;
+                            templateArray = this.templates['SUMAS_2'];
+                        }
+                    } else {
+                        templateArray = this.templates[type];
+                        if (type === 'RESTAS') {
+                            n1 = this.getRandomNumber(difficultyConfig.n1_min, difficultyConfig.n1_max); n2 = this.getRandomNumber(difficultyConfig.n2_min, Math.min(n1 - 1, difficultyConfig.n2_max));
+                            correctAnswer = n1 - n2;
+                        } else if (type === 'MULTIPLICACION') {
+                            n1 = this.getRandomNumber(2, 5); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
+                            if (PRNG.next() > 0.5) { var temp = n1; n1 = n2; n2 = temp; }
+                            correctAnswer = n1 * n2;
+                        } else if (type === 'DIVISIONES') {
+                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(2, 5);
+                            if (n1 === 0 || n2 === 0) { n2 = 2; }
+                            total = n1 * n2;
+                            context.total = (PRNG.next() > 0.5) ? numberToLiteral(total, sujeto.g) : total;
+                            template = this.getRandomElement(templateArray);
+                            if (template.indexOf('amigos') !== -1 || template.indexOf('recibirá') !== -1 || template.indexOf('estudiantes') !== -1 || template.indexOf('jugadores') !== -1) { correctAnswer = n2; } else { correctAnswer = n1; }
+                        }
+                    }
+                    if (!template) { template = this.getRandomElement(templateArray); }
+
+                    context.personaje = personaje; 
+                    context.n1 = (PRNG.next() > 0.5) ? numberToLiteral(n1, sujeto.g) : n1;
+                    context.n2 = (PRNG.next() > 0.5) ? numberToLiteral(n2, sujeto.g) : n2;
+                    context.sujeto_p = sujeto.p; context.sujeto_s = sujeto.s;
+                    context.cont_p = sujeto.cont.p; context.cont_s = sujeto.cont.s;
+                    context.verbo_gain = pack.verbos.gain;
+                    context.verbo_loss = pack.verbos.loss;
+                    
+                    var questionText = this.populateTemplate(template, context);
+                    var options = this.generateOptions(correctAnswer);
+                    return { id: type + ':' + new Date().getTime(), question: questionText, options: options, correctAnswerIndex: options.indexOf(correctAnswer) };
+                }
+            };
+            
+            var QuizManager = {
+                startQuiz: function(d) {
+                    function fnv1a(str) { for(var i = 0, h = 0x811c9dc5; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x01000193); return h; }
+                    var seed = fnv1a(state.activeProfile + d + state.profiles[state.activeProfile].solvedQuestions[d].length);
+                    PRNG.seed(seed);
+                    ui.gameHudPlayerName.textContent = 'JUGADOR :: ' + state.activeProfile;
+                    var questionData = QuestionGenerator.createQuestion(d);
+                    state.quiz.currentQuestion = questionData;
+                    state.quiz.currentDifficulty = d;
+                    state.quiz.isAnswered = false;
+                    this.updateHud();
+                    this.startTimer();
+                    this.renderQuizUI();
+                    EventBus.emit('system:requestNavigation', { windowId: 'game' });
+                },
+                handleAnswer: function(selectedIndex) {
+                    if (state.quiz.isAnswered) return;
+                    clearInterval(state.quiz.timerId);
+                    state.quiz.isAnswered = true;
+                    var isCorrect = selectedIndex === state.quiz.currentQuestion.correctAnswerIndex;
+                    var optionButtons = ui.quizOptions.querySelectorAll('.option-button');
+                    if (selectedIndex >= 0) { optionButtons[selectedIndex].classList.add(isCorrect ? 'correct-answer' : 'incorrect-answer'); }
+                    if (isCorrect) { 
+                        AudioManager.playSound('success'); 
+                        state.quiz.streak++;
+                        // MEJORA: Crear partículas de celebración
+                        var buttonRect = optionButtons[selectedIndex].getBoundingClientRect();
+                        var centerX = buttonRect.left + buttonRect.width / 2;
+                        var centerY = buttonRect.top + buttonRect.height / 2;
+                        createCelebrationParticles(centerX, centerY);
+                    } else { 
+                        AudioManager.playSound('error'); 
+                        state.quiz.streak = 0; 
+                        if (optionButtons[state.quiz.currentQuestion.correctAnswerIndex]) {
+                            optionButtons[state.quiz.currentQuestion.correctAnswerIndex].classList.add('correct-answer');
+                        } 
+                        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) { 
+                            ui.glitchWrapper.classList.add('glitch-active'); 
+                            ui.holographicPanel.classList.add('error-flash'); 
+                            setTimeout(function() { 
+                                ui.glitchWrapper.classList.remove('glitch-active'); 
+                                ui.holographicPanel.classList.remove('error-flash'); 
+                            }, 300); 
+                        } 
+                    }
+                    this.updateHud();
+                    optionButtons.forEach(function(btn) { btn.disabled = true; });
+                    this.endQuiz(isCorrect);
+                },
+                endQuiz: function(wasCorrect) {
+                    var profile = state.profiles[state.activeProfile];
+                    var difficulty = state.quiz.currentDifficulty;
+                    if (wasCorrect) { if (profile.solvedQuestions[difficulty].indexOf(state.quiz.currentQuestion.id) === -1) { profile.solvedQuestions[difficulty].push(state.quiz.currentQuestion.id); }
+                    } else { profile.perfectRuns[difficulty] = false; }
+                    saveProfilesToStorage();
+                    setTimeout(function() {
+                        if (wasCorrect) { EventBus.emit('quiz:victory'); } else { var correctAnswerText = state.quiz.currentQuestion.options[state.quiz.currentQuestion.correctAnswerIndex]; EventBus.emit('quiz:defeat', { correctAnswer: 'LA RESPUESTA CORRECTA ERA: ' + correctAnswerText }); }
+                    }, 1500);
+                },
+                updateHud: function() {
+                    ui.gameHudStreak.textContent = "RACHA: " + state.quiz.streak;
+                    var timePercentage = (state.quiz.timerValue / QUESTION_TIME) * 100;
+                    ui.timeBarFill.style.width = timePercentage + '%';
+                    ui.timeBarFill.classList.remove('warning', 'critical');
+                    if (timePercentage < 25) { ui.timeBarFill.classList.add('critical'); } 
+                    else if (timePercentage < 50) { ui.timeBarFill.classList.add('warning'); }
+                },
+                startTimer: function() {
+                    state.quiz.timerValue = QUESTION_TIME;
+                    this.updateHud();
+                    state.quiz.timerId = setInterval(function() {
+                        state.quiz.timerValue--;
+                        QuizManager.updateHud();
+                        if (state.quiz.timerValue < 0) {
+                            clearInterval(state.quiz.timerId);
+                            QuizManager.handleAnswer(-1);
+                        }
+                    }, 1000);
+                },
+                renderQuizUI: function() {
+                    ui.quizQuestion.textContent = state.quiz.currentQuestion.question;
+                    ui.quizOptions.innerHTML = '';
+                    state.quiz.currentQuestion.options.forEach(function(option, index) {
+                        var button = document.createElement('button');
+                        button.className = 'interactive-button option-button';
+                        button.textContent = option;
+                        button.setAttribute('data-option-index', index);
+                        ui.quizOptions.appendChild(button);
+                    });
+                }
+            };
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.2.0 (ENHANCED)...');
+                loadSettings(); loadProfilesFromStorage(); applyPalette(state.settings.paletteIndex); updateSoundToggleButtons(); 
+                calculateLayout();
+                renderPlayerKeyboard(); 
+                renderPaletteSubMenus();
+                
+                function advanceToProfiles() { AudioManager.init(); EventBus.emit('system:requestNavigation', { windowId: 'profiles', requestFullscreen: true }); }
+                windows.title.addEventListener('click', advanceToProfiles); document.addEventListener('keydown', advanceToProfiles, { once: true });
+                
+                ui.reEnterFullscreenButton.addEventListener('click', function() { EventBus.emit('system:requestFullscreen'); });
+                ui.goToPlayerCreateButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'player' }); });
+                ui.cancelPlayerButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'profiles' }); });
+                ui.backToProfilesButton.addEventListener('click', function() { EventBus.emit('profile:clearActive'); });
+                ui.victoryToMenuButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'mainMenu', fromVictory: true }); });
+                ui.gameOverToMenuButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'mainMenu' }); });
+                ui.profilesList.addEventListener('click', function(e) { var n = e.target.getAttribute('data-profile-name'); if (!n) return; if (e.target.classList.contains('profile-button')) { EventBus.emit('profile:selected', { profileName: n }); } else if (e.target.classList.contains('delete-button')) { EventBus.emit('profile:deleted', { profileName: n }); } });
+                ui.virtualKeyboard.addEventListener('click', function(e) { var k = e.target.getAttribute('data-key'); if (!k || !e.target.classList.contains('key')) return; EventBus.emit('player:input', { key: k }); });
+                ui.levelGrid.addEventListener('click', function(e) { var b = e.target.closest('button[data-difficulty]'); if (b) { EventBus.emit('quiz:start', { difficulty: b.getAttribute('data-difficulty') }); } });
+                ui.quizOptions.addEventListener('click', function(e) { var btn = e.target.closest('.option-button'); if (btn && !state.quiz.isAnswered) { AudioManager.playSound('tick'); EventBus.emit('quiz:answer', { selectedIndex: parseInt(btn.getAttribute('data-option-index'), 10) }); } });
+                
+                document.querySelectorAll('.settings-button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); var menu = document.getElementById(e.target.getAttribute('data-menu-id')); var isActive = menu.classList.contains('active'); document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); if (!isActive) { menu.classList.add('active'); } }); });
+                document.querySelectorAll('.sound-toggle-button').forEach(function(b) { b.addEventListener('click', function() { state.settings.soundEnabled = !state.settings.soundEnabled; updateSoundToggleButtons(); saveSettings(); }); });
+                document.querySelectorAll('.palette-toggle-button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); e.target.parentElement.classList.toggle('open'); }); });
+                document.querySelectorAll('.palette-submenu').forEach(function(s) { s.addEventListener('click', function(e) { if(e.target.hasAttribute('data-palette-index')) { state.settings.paletteIndex = parseInt(e.target.getAttribute('data-palette-index'), 10); applyPalette(state.settings.paletteIndex); saveSettings(); } }); });
+                document.querySelectorAll('.close-session-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('system:closeSession'); }); });
+                document.querySelectorAll('.insignias-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('insignias:show'); }); });
+                ui.closeInsigniasButton.addEventListener('click', function() { EventBus.emit('insignias:hide'); });
+                
+                document.body.addEventListener('click', function() { document.querySelectorAll('.settings-menu.active, .palette-container.open').forEach(function(m) { m.classList.remove('active', 'open'); }); });
+                if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) { document.body.addEventListener('mousemove', function(e) { var x = (e.clientX / window.innerWidth) - 0.5, y = (e.clientY / window.innerHeight) - 0.5, rx = y * -5, ry = x * 5; if(ui.holographicPanel) ui.holographicPanel.style.transform = 'rotateX(' + (10 + rx) + 'deg) rotateY(' + ry + 'deg)'; }); }
+                
+                window.addEventListener('resize', calculateLayout);
+                document.addEventListener('fullscreenchange', handleFullscreenChange); document.addEventListener('webkitfullscreenchange', handleFullscreenChange); document.addEventListener('mozfullscreenchange', handleFullscreenChange); document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+                
+                EventBus.on('system:requestNavigation', function(d) { AudioManager.playSound('navigate'); if(d.requestFullscreen) requestFullscreen(); if(d.fromVictory) { renderProfileRank(); populateLevelGrid(); } if(d.windowId === 'profiles') { renderProfiles(); } showWindow(d.windowId); });
+                EventBus.on('system:requestFullscreen', function() { AudioManager.playSound('navigate'); requestFullscreen(); });
+                EventBus.on('system:closeSession', function() { AudioManager.playSound('navigate'); document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); if (state.currentWindow === 'game') { clearInterval(state.quiz.timerId); showWindow('mainMenu'); } else { state.activeProfile = null; showWindow('profiles'); } });
+                EventBus.on('profile:selected', function(d) { AudioManager.playSound('navigate'); state.activeProfile = d.profileName; state.quiz.streak = 0; renderProfileRank(); populateLevelGrid(); showWindow('mainMenu'); });
+                EventBus.on('profile:deleted', function(d) { AudioManager.playSound('error'); delete state.profiles[d.profileName]; saveProfilesToStorage(); renderProfiles(); });
+                EventBus.on('profile:clearActive', function() { AudioManager.playSound('navigate'); state.activeProfile = null; showWindow('profiles'); });
+                
+                EventBus.on('player:input', function(d) {
+                    AudioManager.playSound('tick');
+                    var nameDisplay = ui.playerNameDisplay;
+                    nameDisplay.classList.remove('shake', 'error-flash');
+
+                    if (d.key === 'Backspace') {
+                        state.newPlayerName = state.newPlayerName.slice(0, -1);
+                    } else if (d.key === 'Enter') {
+                        var n = state.newPlayerName.trim();
+                        if (n && !state.profiles[n]) {
+                            state.profiles[n] = getEmptyProfileData();
+                            saveProfilesToStorage();
+                            renderProfiles();
+                            showWindow('profiles');
+                            state.newPlayerName = '';
+                        } else {
+                            void nameDisplay.offsetWidth;
+                            nameDisplay.classList.add('error-flash');
+                        }
+                    } else if (d.key === 'Shift') {
+                        state.isShiftActive = !state.isShiftActive;
+                        renderPlayerKeyboard();
+                    } else {
+                        if (state.newPlayerName.length < 12 && d.key.length === 1) {
+                            var char = d.key;
+                            state.newPlayerName += state.isShiftActive ? char.toUpperCase() : char.toLowerCase();
+                        } else if (state.newPlayerName.length >= 12) {
+                            void nameDisplay.offsetWidth;
+                            nameDisplay.classList.add('shake');
+                        }
+                    }
+                    ui.playerNameText.textContent = state.newPlayerName;
+                    nameDisplay.style.setProperty('--chars', state.newPlayerName.length);
+                });
+
+                EventBus.on('quiz:start', function(d) { QuizManager.startQuiz(d.difficulty); });
+                EventBus.on('quiz:answer', function(d) { QuizManager.handleAnswer(d.selectedIndex); });
+                EventBus.on('quiz:victory', function() { 
+                    // Calcular insignia actual
+                    if (state.activeProfile) {
+                        var profile = state.profiles[state.activeProfile];
+                        var totalSolved = 0;
+                        var categories = Object.keys(profile.solvedQuestions);
+                        for (var i = 0; i < categories.length; i++) {
+                            totalSolved += profile.solvedQuestions[categories[i]].length;
+                        }
+                        var rankIndex = Math.floor(totalSolved / 5);
+                        rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1);
+                        var insigniaShape = RANK_SHAPES[rankIndex];
+                        
+                        // Mostrar insignia en la pantalla de victoria
+                        var display3d = document.getElementById('insignia3dDisplay');
+                        if (display3d && insigniaShape) {
+                            display3d.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700');
+                        }
+                    }
+                    showWindow('victory'); 
+                });
+                EventBus.on('quiz:defeat', function(d) { ui.gameOverCorrectAnswer.textContent = d.correctAnswer; showWindow('gameOver'); });
+                EventBus.on('insignias:show', function() { document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); renderInsignias(); showWindow('insignias'); });
+                EventBus.on('insignias:hide', function() { showWindow(state.previousWindow); });
+                
+                setTimeout(function() { showWindow('title'); }, 1000);
+                console.log('[BOOT][INFO] PREFLIGHT OK. SISTEMA TOTALMENTE COMPATIBLE CON MANIFIESTO.');
+            });
+        })();
+    </script>
