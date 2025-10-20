@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL QUIZ v6.3.0 (MEJORADO)</title>
+    <title>TERMINAL QUIZ v6.5.1 (CORE UPDATE)</title>
     <style>
         :root {
             --color-bg-primary: #0A0A0A; --color-surface: #141414; --color-func: #2A2A2A; --color-text-passive: #B0B0B0; --color-text-bright: #FFFFFF; --color-accent-primary: #00FFFF; --color-accent-bios: #00FF8A; --color-error: #FF414B; --color-success: #39FF14; --color-accent-gold: #FFD700; --color-warning: #FFD300;
@@ -20,7 +20,6 @@
         body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-image: linear-gradient(var(--color-surface) 1px, transparent 1px), linear-gradient(90deg, var(--color-surface) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.05; z-index: -1; }
         main { width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform-style: preserve-3d; }
         
-        /* MEJORA 1: Animaciones de entrada dinámicas */
         .window { width: 100%; height: 100%; padding: 0 var(--gap-l); position: absolute; top: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; opacity: 0; transform: translateX(-100px) translateZ(-200px); pointer-events: none; visibility: hidden; transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 400ms cubic-bezier(0.4, 0, 0.2, 1), visibility 400ms; }
         .window.active { opacity: 1; transform: translateX(0) translateZ(0px); pointer-events: auto; visibility: visible; }
         
@@ -30,7 +29,6 @@
         h2 { font-size: clamp(1.5rem, 6vmin, 3rem); color: var(--color-text-bright); margin-bottom: var(--gap-m); display: flex; align-items: center; justify-content: center; }
         p { font-size: clamp(0.8rem, 2.5vmin, 1.1rem); color: var(--color-text-passive); max-width: 90%; line-height: 1.6; }
         
-        /* MEJORA 2: Efectos de brillo mejorados en botones */
         .interactive-button, button { 
             background: linear-gradient(135deg, var(--color-func) 0%, #1a1a1a 100%);
             border: 2px solid var(--color-surface); 
@@ -100,7 +98,6 @@
         .palette-submenu { display: none; position: absolute; top: 0; right: 100%; background-color: var(--color-bg-primary); border: 1px solid var(--color-surface); }
         .palette-container.open .palette-submenu { display: block; }
         
-        /* MEJORA 3: Efecto de celebración con partículas */
         @keyframes particle-burst {
             0% { transform: translate(0, 0) scale(1); opacity: 1; }
             100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
@@ -199,7 +196,6 @@
             50% { transform: scale(1.1); }
         }
         
-        /* MEJORA DEL TECLADO VIRTUAL */
         #playerNameDisplay { 
             position: relative;
             width: min(90vw, calc(var(--k) * 8 + var(--gap-s) * 7)); 
@@ -280,12 +276,14 @@
         }
         
         #quizQuestion { font-size: clamp(1.2rem, 4vmin, 2rem); color: var(--color-accent-gold); margin-bottom: var(--gap-l); max-width: 900px; line-height: 1.5; }
+
         #quizOptions { display: grid; grid-template-columns: 1fr; gap: var(--gap-m); width: 100%; max-width: 800px; }
         @media (min-width: 600px) { #quizOptions { grid-template-columns: 1fr 1fr; } }
+        
         .option-button { 
-            padding: var(--gap-m); 
+            padding: clamp(12px, 3vmin, 24px) var(--gap-m); 
             text-transform: none; 
-            font-size: clamp(1rem, 4vmin, 1.8rem); 
+            font-size: clamp(1.2rem, 4.5vmin, 2rem);
             text-align: center;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -357,335 +355,141 @@
         .mastery-insignia { width: 24px; height: 36px; flex-shrink: 0; }
         .mastery-insignia svg { width: 100%; height: 100%; }
         
-        /* MEJORA: Panel de Insignias estilo LCARS - SIN SCROLL */
-        #insigniasGrid { 
+        #insigniasContainer {
+            display: flex;
+            flex-direction: row;
+            gap: var(--gap-l);
+            width: 100%;
+            max-width: 1100px;
+            height: 70vh;
+        }
+
+        #insigniasList {
+            flex: 2;
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: var(--gap-m); 
-            width: 100%; 
-            max-width: 1100px; 
             padding: var(--gap-m);
-            /* Scroll removido para mostrar todas las insignias */
-            background: linear-gradient(135deg, 
-                rgba(255, 153, 102, 0.05) 0%,
-                rgba(153, 153, 255, 0.05) 50%,
-                rgba(204, 153, 204, 0.05) 100%
-            );
-            border-radius: 30px;
-            border: 3px solid rgba(0, 255, 255, 0.3);
-            position: relative;
+            overflow-y: auto;
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.5) 0%, rgba(10, 10, 10, 0.5) 100%);
+            border-radius: 15px;
+            border: 2px solid var(--color-surface);
         }
-        #insigniasGrid::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg,
-                #FF9966 0%,
-                #9999FF 25%,
-                #CC99CC 50%,
-                #9999FF 75%,
-                #FF9966 100%
-            );
-            border-radius: 30px 30px 0 0;
-        }
-        /* Escaneo vertical periódico */
-        #insigniasGrid::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg,
-                transparent 0%,
-                rgba(0, 255, 255, 0.1) 49%,
-                rgba(0, 255, 255, 0.15) 50%,
-                rgba(0, 255, 255, 0.1) 51%,
-                transparent 100%
-            );
-            pointer-events: none;
-            animation: lcars-vertical-scan 5s linear infinite;
-        }
-        @keyframes lcars-vertical-scan {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(200%); }
-        }
-        /* Media query removida - sin scroll en todas las pantallas */
 
+        #insigniaGlyphDisplay {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #1a1a1a 0%, #0A0A0A 100%);
+            border: 2px solid var(--color-accent-primary);
+            border-radius: 15px;
+            padding: var(--gap-l);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        #insigniaGlyphDisplay .glyph-svg-container {
+            width: 80%;
+            max-width: 200px;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #insigniaGlyphDisplay .glyph-svg-container svg {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 20px var(--color-accent-gold));
+        }
+        #insigniaGlyphDisplay .glyph-title {
+            font-size: clamp(1rem, 3vmin, 1.3rem);
+            color: var(--color-accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: var(--gap-m);
+            flex-shrink: 0;
+            height: 60px;
+        }
+        
         .insignia-item { 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center; 
-            gap: var(--gap-m); 
+            justify-content: flex-start;
+            gap: var(--gap-s); 
             text-align: center;
             padding: var(--gap-m);
-            background: linear-gradient(135deg, 
-                rgba(42, 42, 42, 0.8) 0%, 
-                rgba(20, 20, 20, 0.8) 100%
-            );
-            border: 2px solid #FF9966;
-            border-radius: 15px 15px 15px 15px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        .insignia-item::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg,
-                #FF9966 0%,
-                #9999FF 50%,
-                #CC99CC 100%
-            );
-            border-radius: 15px 0 0 15px;
+            background: linear-gradient(135deg, rgba(42, 42, 42, 0.8) 0%, rgba(20, 20, 20, 0.8) 100%);
+            border: 2px solid #555;
+            border-radius: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
         .insignia-item:hover {
-            transform: translateY(-8px) scale(1.05);
+            transform: translateY(-5px);
             border-color: var(--color-accent-primary);
-            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.4),
-                        0 0 40px rgba(0, 255, 255, 0.2);
-            background: linear-gradient(135deg, 
-                rgba(42, 42, 42, 1) 0%, 
-                rgba(30, 30, 30, 1) 100%
-            );
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
         }
         .insignia-item-svg { 
-            width: 70px; 
-            height: 105px;
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
-            transition: filter 0.4s;
-        }
-        .insignia-item:hover .insignia-item-svg {
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+            width: 50px; 
+            height: 75px;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
         }
         .insignia-item-title { 
-            font-size: clamp(0.85rem, 2.5vmin, 1.1rem); 
+            font-size: clamp(0.8rem, 2vmin, 1rem); 
             color: var(--color-text-bright); 
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
             font-weight: bold;
-            line-height: 1.3;
-        }
-        
-        /* ============================================
-           EFECTOS STAR TREK PARA PANTALLA DE VICTORIA
-           ============================================ */
-        .victory-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: var(--gap-l);
-            width: 100%;
-            position: relative;
-        }
-        
-        /* Efecto de teletransporte */
-        .teleport-effect {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 400px;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .teleport-effect::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, 
-                transparent 0%, 
-                rgba(0, 255, 255, 0.1) 20%,
-                rgba(0, 255, 255, 0.2) 40%,
-                rgba(0, 255, 255, 0.3) 50%,
-                rgba(0, 255, 255, 0.2) 60%,
-                rgba(0, 255, 255, 0.1) 80%,
-                transparent 100%
-            );
-            animation: teleport-shimmer 2s ease-in-out infinite;
-        }
-        @keyframes teleport-shimmer {
-            0%, 100% { opacity: 0; transform: translateY(-100%); }
-            50% { opacity: 1; transform: translateY(100%); }
-        }
-        
-        /* Insignia flotante 3D */
-        .insignia-showcase {
-            width: 150px;
-            height: 200px;
-            perspective: 1000px;
-            position: relative;
-            z-index: 2;
-            margin: var(--gap-l) 0;
-        }
-        .insignia-3d-display {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            animation: float-rotate 4s ease-in-out infinite;
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
-        }
-        .insignia-3d-display svg {
-            width: 100%;
-            height: 100%;
-        }
-        @keyframes float-rotate {
-            0%, 100% { transform: rotateY(0deg) translateY(0px); }
-            25% { transform: rotateY(90deg) translateY(-10px); }
-            50% { transform: rotateY(180deg) translateY(0px); }
-            75% { transform: rotateY(270deg) translateY(-10px); }
-        }
-        
-        /* Partículas orbitando */
-        .insignia-showcase::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200%;
-            height: 200%;
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: orbit-pulse 3s ease-in-out infinite;
-        }
-        @keyframes orbit-pulse {
-            0%, 100% { 
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 0.3;
-            }
-            50% { 
-                transform: translate(-50%, -50%) scale(1.2);
-                opacity: 0.8;
-            }
-        }
-        
-        /* Panel LCARS */
-        .lcars-info-panel {
-            display: flex;
-            align-items: center;
-            gap: var(--gap-m);
-            padding: var(--gap-m);
-            background: linear-gradient(90deg, 
-                rgba(255, 153, 102, 0.1) 0%,
-                rgba(153, 153, 255, 0.1) 100%
-            );
-            border-radius: 20px 20px 20px 20px;
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            position: relative;
-            overflow: hidden;
-            max-width: 600px;
-        }
-        .lcars-info-panel::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(0, 255, 255, 0.2), 
-                transparent
-            );
-            animation: lcars-scan-victory 3s linear infinite;
-        }
-        @keyframes lcars-scan-victory {
-            0% { left: -100%; }
-            100% { left: 200%; }
-        }
-        .lcars-bar {
-            width: 40px;
-            height: 60px;
-            border-radius: 20px;
-            flex-shrink: 0;
-        }
-        .lcars-bar.left-bar {
-            background: linear-gradient(180deg, #FF9966 0%, #CC6633 100%);
-        }
-        .lcars-bar.right-bar {
-            background: linear-gradient(180deg, #9999FF 0%, #6666CC 100%);
-        }
-        .victory-message {
-            font-size: clamp(1rem, 3vmin, 1.3rem);
-            color: var(--color-text-bright);
-            letter-spacing: 2px;
-            z-index: 1;
-        }
-        .victory-title {
-            animation: glow-pulse 2s ease-in-out infinite;
-        }
-        @keyframes glow-pulse {
-            0%, 100% { 
-                text-shadow: 0 0 10px var(--color-success),
-                             0 0 20px var(--color-success);
-            }
-            50% { 
-                text-shadow: 0 0 20px var(--color-success),
-                             0 0 40px var(--color-success),
-                             0 0 60px var(--color-success);
-            }
-        }
-        
-        /* Botón estilo Starfleet */
-        .starfleet-button {
-            background: linear-gradient(135deg, 
-                var(--color-accent-primary) 0%, 
-                #008B8B 100%
-            );
-            border: 3px solid var(--color-accent-primary);
-            color: #000;
-            font-weight: bold;
-            padding: var(--gap-m) var(--gap-l);
-            font-size: clamp(1rem, 3vmin, 1.3rem);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        .starfleet-button::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, 
-                transparent 30%, 
-                rgba(255, 255, 255, 0.3) 50%, 
-                transparent 70%
-            );
-            transform: rotate(45deg);
-            animation: starfleet-shine 3s linear infinite;
-        }
-        @keyframes starfleet-shine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-        .starfleet-button:hover {
-            background: linear-gradient(135deg, 
-                #00FFFF 0%, 
-                #00CED1 100%
-            );
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8),
-                        0 0 50px rgba(0, 255, 255, 0.5);
-            transform: translateY(-3px) scale(1.05);
-        }
             line-height: 1.2;
         }
+        
+        .victory-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap-l); width: 100%; position: relative; }
+        
+        .teleport-effect { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 400px; pointer-events: none; z-index: 1; }
+        .teleport-effect::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 255, 0.1) 20%, rgba(0, 255, 255, 0.2) 40%, rgba(0, 255, 255, 0.3) 50%, rgba(0, 255, 255, 0.2) 60%, rgba(0, 255, 255, 0.1) 80%, transparent 100%); animation: teleport-shimmer 2s ease-in-out infinite; }
+        @keyframes teleport-shimmer { 0%, 100% { opacity: 0; transform: translateY(-100%); } 50% { opacity: 1; transform: translateY(100%); } }
+        
+        .insignia-showcase { width: 150px; height: 200px; perspective: 1000px; position: relative; z-index: 2; margin: var(--gap-l) 0; }
+        .insignia-3d-display { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: float-rotate 4s ease-in-out infinite; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6)); }
+        .insignia-3d-display svg { width: 100%; height: 100%; }
+        @keyframes float-rotate { 0%, 100% { transform: rotateY(0deg) translateY(0px); } 25% { transform: rotateY(90deg) translateY(-10px); } 50% { transform: rotateY(180deg) translateY(0px); } 75% { transform: rotateY(270deg) translateY(-10px); } }
+        
+        .insignia-showcase::after { content: ""; position: absolute; top: 50%; left: 50%; width: 200%; height: 200%; border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); animation: orbit-pulse 3s ease-in-out infinite; }
+        @keyframes orbit-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; } }
+        
+        .lcars-info-panel { display: flex; align-items: center; gap: var(--gap-m); padding: var(--gap-m); background: linear-gradient(90deg, rgba(255, 153, 102, 0.1) 0%, rgba(153, 153, 255, 0.1) 100%); border-radius: 20px; border: 2px solid rgba(0, 255, 255, 0.3); position: relative; overflow: hidden; max-width: 600px; }
+        .lcars-info-panel::before { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent); animation: lcars-scan-victory 3s linear infinite; }
+        @keyframes lcars-scan-victory { 0% { left: -100%; } 100% { left: 200%; } }
+        .lcars-bar { width: 40px; height: 60px; border-radius: 20px; flex-shrink: 0; }
+        .lcars-bar.left-bar { background: linear-gradient(180deg, #FF9966 0%, #CC6633 100%); }
+        .lcars-bar.right-bar { background: linear-gradient(180deg, #9999FF 0%, #6666CC 100%); }
+        .victory-message { font-size: clamp(1rem, 3vmin, 1.3rem); color: var(--color-text-bright); letter-spacing: 2px; z-index: 1; }
+        .victory-title { animation: glow-pulse 2s ease-in-out infinite; }
+        @keyframes glow-pulse { 0%, 100% { text-shadow: 0 0 10px var(--color-success), 0 0 20px var(--color-success); } 50% { text-shadow: 0 0 20px var(--color-success), 0 0 40px var(--color-success), 0 0 60px var(--color-success); } }
+        
+        .starfleet-button { background: linear-gradient(135deg, var(--color-accent-primary) 0%, #008B8B 100%); border: 3px solid var(--color-accent-primary); color: #000; font-weight: bold; padding: var(--gap-m) var(--gap-l); font-size: clamp(1rem, 3vmin, 1.3rem); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden; }
+        .starfleet-button::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%); transform: rotate(45deg); animation: starfleet-shine 3s linear infinite; }
+        @keyframes starfleet-shine { 0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); } 100% { transform: translateX(100%) translateY(100%) rotate(45deg); } }
+        .starfleet-button:hover { background: linear-gradient(135deg, #00FFFF 0%, #00CED1 100%); box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 50px rgba(0, 255, 255, 0.5); transform: translateY(-3px) scale(1.05); }
+
+        #glitchOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--color-bg-primary); z-index: 9999; pointer-events: none; opacity: 0; }
+        #glitchOverlay.active { opacity: 1; animation: glitch-transition 300ms steps(2, end); }
+        @keyframes glitch-transition {
+            0% { clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%); transform: translate(-10px, 0); }
+            10% { clip-path: polygon(0 75%, 100% 75%, 100% 75%, 0 75%); transform: translate(5px, 0); }
+            20% { clip-path: polygon(0 50%, 100% 50%, 100% 20%, 0 20%); transform: translate(-7px, 0); }
+            30% { clip-path: polygon(0 90%, 100% 90%, 100% 90%, 0 90%); transform: translate(10px, 0); }
+            40% { clip-path: polygon(0 40%, 100% 40%, 100% 80%, 0 80%); transform: translate(-5px, 0); }
+            50% { clip-path: polygon(0 60%, 100% 60%, 100% 60%, 0 60%); transform: translate(3px, 0); }
+            60% { clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%); transform: translate(-8px, 0); }
+            70% { clip-path: polygon(0 85%, 100% 85%, 100% 85%, 0 85%); transform: translate(4px, 0); }
+            80% { clip-path: polygon(0 55%, 100% 55%, 100% 45%, 0 45%); transform: translate(-6px, 0); }
+            90% { clip-path: polygon(0 25%, 100% 25%, 100% 30%, 0 30%); transform: translate(8px, 0); }
+            100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0, 0); }
+        }
+
     </style>
 </head>
 <body>
@@ -697,13 +501,13 @@
             <div id="profiles" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: SELECT PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuProfiles">&#9881;</button><div id="settingsMenuProfiles" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
                 <div class="window-content"><h2>PERFILES DE USUARIO</h2><ul id="profilesList"></ul><button id="goToPlayerCreateButton" class="interactive-button">CREAR NUEVO PERFIL</button></div>
-                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
             </div>
 
             <div id="player" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: CREATE PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuPlayer">&#9881;</button><div id="settingsMenuPlayer" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
                 <div class="window-content"><h2>NUEVO JUGADOR</h2><div id="playerNameDisplay"><span id="playerNameText"></span><span class="cursor"></span></div><div id="virtualKeyboard"></div><div style="display: flex; gap: 16px; margin-top: 16px;"><button id="cancelPlayerButton">CANCELAR</button></div></div>
-                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
             </div>
             
             <div id="mainMenu" class="window">
@@ -712,7 +516,7 @@
                     <h2 id="mainMenuHeader">JUGADOR: <span id="profileDisplayName"></span><span id="rankInsigniaDisplay"></span></h2>
                     <div id="levelGrid"></div><button id="backToProfilesButton" style="margin-top: 16px;">VOLVER A PERFILES</button>
                 </div>
-                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
             </div>
             
             <div id="game" class="window">
@@ -726,7 +530,7 @@
                     </div>
                 </header>
                 <div class="window-content"><div id="glitch-wrapper"><div id="holographic-panel"><h2>CALCULAR</h2><p id="quizQuestion"></p><div id="quizOptions"></div></div></div></div>
-                <footer class="telemetry-footer">BUILD: v6.3.0-mejorado</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
             </div>
             
             <div id="victory" class="window">
@@ -749,11 +553,22 @@
             
             <div id="insignias" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: VISUALIZADOR DE INSIGNIAS</span></header>
-                <div class="window-content"><h2 style="margin-bottom: var(--gap-l);">COLECCIÓN DE INSIGNIAS</h2><div id="insigniasGrid"></div></div>
+                <div class="window-content">
+                    <h2 style="margin-bottom: var(--gap-l);">COLECCIÓN DE INSIGNIAS</h2>
+                    <div id="insigniasContainer">
+                        <div id="insigniasList"></div>
+                        <div id="insigniaGlyphDisplay">
+                            <div class="glyph-svg-container"></div>
+                            <div class="glyph-title"></div>
+                        </div>
+                    </div>
+                </div>
                 <footer class="telemetry-footer"><button id="closeInsigniasButton">VOLVER</button></footer>
             </div>
 
             <div id="fullscreenOverlay" class="window" style="z-index: 999; background-color: rgba(0,0,0,0.95);"><h2>MODO PANTALLA COMPLETA REQUERIDO</h2><p>PARA UNA EXPERIENCIA ÓPTIMA, EL SISTEMA REQUIERE OPERAR EN MODO DE PANTALLA COMPLETA.</p><button id="reEnterFullscreenButton">REACTIVAR</button></div>
+            
+            <div id="glitchOverlay"></div>
         </main>
     </div>
     <script>
@@ -761,7 +576,6 @@
             'use strict';
             var QUESTION_TIME = 25;
             
-            // MEJORA: Función para crear partículas de celebración
             function createCelebrationParticles(x, y) {
                 var colors = ['#39FF14', '#00FFFF', '#FFD700', '#00FF8A'];
                 for (var i = 0; i < 20; i++) {
@@ -791,7 +605,7 @@
 
             var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: QUESTION_TIME, timerId: null } };
             var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), insignias: document.getElementById('insignias'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
-            var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasGrid: document.getElementById('insigniasGrid'), closeInsigniasButton: document.getElementById('closeInsigniasButton') };
+            var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasList: document.getElementById('insigniasList'), closeInsigniasButton: document.getElementById('closeInsigniasButton'), glitchOverlay: document.getElementById('glitchOverlay') };
             var PLAYER_KEYBOARD_LAYOUT = [
                 ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I'],
                 ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'],
@@ -804,35 +618,11 @@
             var PALETTE_KEYS = Object.keys(PALETTES);
             var MASTERY_COLORS = { 'SUMAS': '#228B22', 'RESTAS': '#00008B', 'MULTIPLICACION': '#8A2BE2', 'DIVISIONES': '#FF4500' };
             
-            // Nombres Star Trek para las insignias (20 insignias totales)
-            var RANK_NAMES = [
-                '', // índice 0 vacío
-                'Cadete Novato',
-                'Alférez Iniciado',
-                'Teniente Junior',
-                'Teniente Comandante',
-                'Comandante Prime',
-                'Capitán Explorador',
-                'Capitán de Flota',
-                'Comodoro Estelar',
-                'Contralmirante',
-                'Vicealmirante',
-                'Almirante Supremo',
-                'Almirante de Flota',
-                'Gran Almirante',
-                'Comandante de la Flota Estelar',
-                'Mariscal de la Federación',
-                'Canciller Supremo'
-            ];
+            var RANK_NAMES = [ '', 'Cadete Novato', 'Alférez Iniciado', 'Teniente Junior', 'Teniente Comandante', 'Comandante Prime', 'Capitán Explorador', 'Capitán de Flota', 'Comodoro Estelar', 'Contralmirante', 'Vicealmirante', 'Almirante Supremo', 'Almirante de Flota', 'Gran Almirante', 'Comandante de la Flota Estelar', 'Mariscal de la Federación', 'Canciller Supremo' ];
+            var MASTERY_NAMES = { 'SUMAS': 'Maestro de Operaciones Tácticas', 'RESTAS': 'Comandante de Defensa Estratégica', 'MULTIPLICACION': 'Experto de División Científica', 'DIVISIONES': 'Especialista del Cuerpo de Ingeniería' };
             
-            var MASTERY_NAMES = {
-                'SUMAS': 'Maestro de Operaciones Tácticas',
-                'RESTAS': 'Comandante de Defensa Estratégica',
-                'MULTIPLICACION': 'Experto de División Científica',
-                'DIVISIONES': 'Especialista del Cuerpo de Ingeniería'
-            };
-            var BASE_RANK_SHAPES = [ '', `<path d="M10 50 L30 40 L50 50" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 50 L30 40 L50 50 M10 65 L30 55 L50 65" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 40 L30 30 L50 40 M10 55 L30 45 L50 55 M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/><path d="M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,15 38,30 55,30 42,40 47,55 30,45 13,55 18,40 5,30 22,30" fill="%%COLOR%%" transform="translate(0, 15)"/>`, `<path d="M20,65 L10,60 L10,30 L20,25 L40,25 L50,30 L50,60 L40,65 Z" fill="none" stroke="%%COLOR%%" stroke-width="4"/><polygon points="30,35 34,43.5 43,43.5 36,49 38,58 30,53 22,58 24,49 17,43.5 26,43.5" fill="%%COLOR%%"/>`, `<path d="M5,55 L5,25 L30,10 L55,25 L55,55 L30,70 Z" fill="none" stroke="%%COLOR%%" stroke-width="5" stroke-linejoin="round"/> <path d="M15,50 L15,30 L30,20 L45,30 L45,50 L30,60 Z" fill="%%COLOR%%" stroke="#1A1A1A" stroke-width="1"/>`, `<g transform="translate(0, 5)"><path d="M30 20 L50 40 L40 70 L20 70 L10 40 Z" fill="%%COLOR%%" /><path d="M2,40 L15,30 L30,10 L45,30 L58,40 L45,50 L30,70 L15,50 Z" fill="none" stroke="%%COLOR%%" stroke-width="5"/></g>` ];
-            var RANK_SHAPES = (function() { var extendedRanks = BASE_RANK_SHAPES.slice(0); if (extendedRanks.length > 0) { var maxRankInsignia = extendedRanks[extendedRanks.length - 1]; for (var i = 1; i <= 11; i++) { var stars = ''; var starCount = Math.min(i, 5); var yOffset = i > 5 ? 10 : 18; for (var j = 0; j < starCount; j++) { stars += '<text x="' + (30 + (j - (starCount - 1) / 2) * 10) + '" y="' + yOffset + '" font-size="10" fill="#FFD700" text-anchor="middle">★</text>'; } if (i > 5) { var secondRowStarCount = i - 5; for (var k = 0; k < secondRowStarCount; k++) { stars += '<text x="' + (30 + (k - (secondRowStarCount - 1) / 2) * 10) + '" y="' + (yOffset + 12) + '" font-size="10" fill="#FFD700" text-anchor="middle">★</text>'; } } extendedRanks.push(maxRankInsignia + stars); } } return extendedRanks; })();
+            var RANK_SHAPES = [ '', `<path d="M10 50 L30 40 L50 50" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 50 L30 40 L50 50 M10 65 L30 55 L50 65" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<path d="M10 40 L30 30 L50 40 M10 55 L30 45 L50 55 M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/>`, `<polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%"/><path d="M10 70 L30 60 L50 70" stroke="%%COLOR%%" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`, `<polygon points="30,15 38,30 55,30 42,40 47,55 30,45 13,55 18,40 5,30 22,30" fill="%%COLOR%%" transform="translate(0, 15)"/>`, `<path d="M20,65 L10,60 L10,30 L20,25 L40,25 L50,30 L50,60 L40,65 Z" fill="none" stroke="%%COLOR%%" stroke-width="4"/><polygon points="30,35 34,43.5 43,43.5 36,49 38,58 30,53 22,58 24,49 17,43.5 26,43.5" fill="%%COLOR%%"/>`, `<path d="M5,55 L5,25 L30,10 L55,25 L55,55 L30,70 Z" fill="none" stroke="%%COLOR%%" stroke-width="5" stroke-linejoin="round"/> <path d="M15,50 L15,30 L30,20 L45,30 L45,50 L30,60 Z" fill="%%COLOR%%" stroke="#1A1A1A" stroke-width="1"/>`, `<g transform="translate(0, 5)"><path d="M5,50 L30,25 L55,50 L30,75 Z" fill="%%COLOR%%"/><path d="M15,50 L30,35 L45,50 L30,65 Z" fill="#1A1A1A"/></g>`, `<g transform="translate(0, 5)"><path d="M5,50 L30,20 L55,50 L30,80 Z" stroke="%%COLOR%%" stroke-width="4" fill="none"/><polygon points="30,35 35,45 45,45 37.5,51 40,60 30,54 20,60 22.5,51 15,45 25,45" fill="%%COLOR%%"/></g>`, `<g transform="translate(0, 5)"><path d="M10,20 L50,20 L55,45 L30,70 L5,45 Z" fill="%%COLOR%%"/><polygon points="30,30 34,40 42,40 35,45 37,54 30,49 23,54 25,45 18,40 26,40" fill="#1A1A1A"/></g>`, `<g transform="translate(0,5)"><path d="M10,15 L50,15 L58,45 L30,75 L2,45 Z" fill="none" stroke="%%COLOR%%" stroke-width="5"/><polygon points="30,25 34,35 42,35 35,40 37,49 30,44 23,49 25,40 18,35 26,35" fill="%%COLOR%%"/><path d="M20,60 L30,50 L40,60" stroke="%%COLOR%%" stroke-width="4" fill="none" stroke-linecap="round"/></g>`, `<g transform="translate(0,10)"><circle cx="30" cy="40" r="22" stroke="%%COLOR%%" stroke-width="5" fill="none"/><polygon points="30,25 36.5,38.5 51,38.5 39.25,47.5 43.5,61.5 30,52.5 16.5,61.5 20.75,47.5 9,38.5 23.5,38.5" fill="%%COLOR%%" transform="scale(0.8) translate(7, 5)"/></g>`, `<g><path d="M2,45 C2,20 15,15 30,15 C45,15 58,20 58,45 L30,75 Z" fill="%%COLOR%%"/><polygon points="30,30 36.5,43.5 51,43.5 39.25,52.5 43.5,66.5 30,57.5 16.5,66.5 20.75,52.5 9,43.5 23.5,43.5" fill="#1A1A1A" transform="scale(0.6) translate(20, 15)"/></g>`, `<g><path d="M5,15 L55,15 L50,45 L30,75 L10,45 Z" fill="none" stroke="%%COLOR%%" stroke-width="5"/><path d="M15,25 L45,25 L42,45 L30,65 L18,45 Z" fill="%%COLOR%%" stroke="#1A1A1A" stroke-width="1.5"/></g>`, `<g><path d="M5,10 L55,10 L55,50 L30,80 L5,50 Z" stroke="#FFD700" stroke-width="4" fill="none"/><path d="M15,20 L45,20 L45,45 L30,65 L15,45 Z" fill="%%COLOR%%"/><polygon points="30,28 34,38 42,38 35,43 37,52 30,47 23,52 25,43 18,38 26,38" fill="#FFD700"/></g>` ];
+            
             var ESCALADO_DE_DIFICULTAD = { 'SUMAS': [ {min: 1, max: 9}, {min: 5, max: 15}, {min: 10, max: 25}, {min: 20, max: 50}, {min: 40, max: 80}, {min: 60, max: 100}, {min: 80, max: 120}, {min: 90, max: 120} ], 'RESTAS': [ {n1_min: 10, n1_max: 15, n2_min: 1, n2_max: 9}, {n1_min: 15, n1_max: 25, n2_min: 5, n2_max: 14}, {n1_min: 25, n1_max: 40, n2_min: 10, n2_max: 24}, {n1_min: 40, n1_max: 70, n2_min: 15, n2_max: 39}, {n1_min: 70, n1_max: 100, n2_min: 20, n2_max: 69}, {n1_min: 80, n1_max: 120, n2_min: 30, n2_max: 79}, {n1_min: 100, n1_max: 120, n2_min: 50, n2_max: 99}, {n1_min: 100, n1_max: 120, n2_min: 10, n2_max: 99} ], 'MULTIPLICACION': [ {min: 1, max: 4}, {min: 2, max: 5}, {min: 2, max: 7}, {min: 3, max: 8}, {min: 3, max: 10}, {min: 5, max: 11}, {min: 5, max: 12}, {min: 8, max: 12} ], 'DIVISIONES': [ {min: 1, max: 4}, {min: 2, max: 5}, {min: 2, max: 7}, {min: 3, max: 8}, {min: 3, max: 10}, {min: 5, max: 11}, {min: 5, max: 12}, {min: 8, max: 12} ] };
 
             function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); } catch (e) { console.error('[ERR][STORAGE] FALLO AL GUARDAR CONFIGURACIÓN.', e); } }
@@ -842,10 +632,26 @@
             function loadProfilesFromStorage() { try { var storedData = localStorage.getItem(PROFILES_KEY); if (!storedData) { createDefaultProfile(); return; } var d = JSON.parse(storedData); if (typeof d !== 'object' || d === null || Object.keys(d).length === 0) { createDefaultProfile(); return; } var p = {}; var n = Object.keys(d); n.forEach(function(pn) { var op = d[pn] || {}; p[pn] = { solvedQuestions: op.solvedQuestions || { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: op.perfectRuns || { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false } }; }); state.profiles = p; } catch (e) { console.error('[ERR][STORAGE] DATOS DE PERFIL CORRUPTOS. CREANDO NUEVO SET DE PERFILES.', e); createDefaultProfile(); } }
             
             function showWindow(windowId) {
-                if (windowId !== 'insignias') { state.previousWindow = state.currentWindow; }
-                for (var id in windows) { windows[id].classList.remove('active'); }
-                windows[windowId].classList.add('active');
-                state.currentWindow = windowId;
+                if (state.currentWindow === windowId) return;
+
+                ui.glitchOverlay.classList.add('active');
+                
+                setTimeout(function() {
+                    if (windowId !== 'insignias') {
+                        state.previousWindow = state.currentWindow;
+                    }
+                    for (var id in windows) {
+                        windows[id].classList.remove('active');
+                    }
+                    if (windows[windowId]) {
+                        windows[windowId].classList.add('active');
+                    }
+                    state.currentWindow = windowId;
+
+                    setTimeout(function() {
+                        ui.glitchOverlay.classList.remove('active');
+                    }, 50);
+                }, 300);
             }
 
             function requestFullscreen() { var e = document.documentElement; if (e.requestFullscreen) e.requestFullscreen(); else if (e.mozRequestFullScreen) e.mozRequestFullScreen(); else if (e.webkitRequestFullscreen) e.webkitRequestFullscreen(); else if (e.msRequestFullscreen) e.msRequestFullscreen(); }
@@ -876,7 +682,6 @@
                         if (state.isShiftActive && key.length === 1) { t = t.toUpperCase(); } 
                         else if (!state.isShiftActive && key.length === 1) { t = t.toLowerCase(); }
                         
-                        // MEJORA: Marcar visualmente la tecla Shift cuando está activa
                         if (key === 'Shift' && state.isShiftActive) {
                             e.classList.add('shift-active');
                         }
@@ -910,7 +715,6 @@
                         masteryInsigniaContainer.innerHTML = createInsigniaSVG(masteryShape, MASTERY_COLORS[d]); 
                     } 
                     
-                    // Crear wrapper para información con dos líneas
                     var infoWrapper = document.createElement('div');
                     infoWrapper.className = 'level-info-wrapper';
                     
@@ -941,28 +745,76 @@
                     ui.levelGrid.appendChild(b); 
                 }); 
             }
+            
             function renderInsignias() {
-                ui.insigniasGrid.innerHTML = '';
-                var docFrag = document.createDocumentFragment();
+                var listContainer = ui.insigniasList;
+                var displayContainer = document.querySelector('#insigniaGlyphDisplay');
+                var svgContainer = displayContainer.querySelector('.glyph-svg-container');
+                var titleContainer = displayContainer.querySelector('.glyph-title');
+                
+                listContainer.innerHTML = '';
+                
+                var allInsignias = [];
                 RANK_SHAPES.forEach(function(shape, index) {
-                    if(index === 0) return;
-                    var item = document.createElement('div'); item.className = 'insignia-item';
-                    var svgContainer = document.createElement('div'); svgContainer.className = 'insignia-item-svg';
-                    svgContainer.innerHTML = createInsigniaSVG(shape, '#FFD700');
-                    var title = document.createElement('div'); title.className = 'insignia-item-title';
-                    title.textContent = RANK_NAMES[index] || 'RANGO ' + index;
-                    item.appendChild(svgContainer); item.appendChild(title); docFrag.appendChild(item);
+                    if (index === 0) return;
+                    allInsignias.push({
+                        title: RANK_NAMES[index] || 'RANGO ' + index,
+                        shape: shape,
+                        color: '#FFD700'
+                    });
                 });
-                Object.keys(MASTERY_COLORS).forEach(function(category){
-                    var item = document.createElement('div'); item.className = 'insignia-item';
-                    var svgContainer = document.createElement('div'); svgContainer.className = 'insignia-item-svg';
-                    svgContainer.innerHTML = createInsigniaSVG(RANK_SHAPES[RANK_SHAPES.length - 1], MASTERY_COLORS[category]);
-                    var title = document.createElement('div'); title.className = 'insignia-item-title';
-                    title.textContent = MASTERY_NAMES[category] || 'MAESTRÍA ' + category;
-                    item.appendChild(svgContainer); item.appendChild(title); docFrag.appendChild(item);
+                Object.keys(MASTERY_NAMES).forEach(function(category) {
+                    allInsignias.push({
+                        title: MASTERY_NAMES[category],
+                        shape: RANK_SHAPES[16],
+                        color: MASTERY_COLORS[category]
+                    });
                 });
-                ui.insigniasGrid.appendChild(docFrag);
+
+                var docFrag = document.createDocumentFragment();
+                allInsignias.forEach(function(insignia) {
+                    var item = document.createElement('div');
+                    item.className = 'insignia-item';
+                    
+                    item.dataset.shape = insignia.shape;
+                    item.dataset.color = insignia.color;
+                    item.dataset.title = insignia.title;
+
+                    var itemSvgContainer = document.createElement('div');
+                    itemSvgContainer.className = 'insignia-item-svg';
+                    itemSvgContainer.innerHTML = createInsigniaSVG(insignia.shape, insignia.color);
+
+                    var itemTitle = document.createElement('div');
+                    itemTitle.className = 'insignia-item-title';
+                    itemTitle.textContent = insignia.title;
+                    
+                    item.appendChild(itemSvgContainer);
+                    item.appendChild(itemTitle);
+                    docFrag.appendChild(item);
+                });
+                
+                listContainer.appendChild(docFrag);
+
+                function updateGlyphDisplay(shape, color, title) {
+                    svgContainer.innerHTML = createInsigniaSVG(shape, color);
+                    titleContainer.textContent = title;
+                }
+
+                listContainer.addEventListener('mouseover', function(e) {
+                    var targetItem = e.target.closest('.insignia-item');
+                    if (targetItem) {
+                        updateGlyphDisplay(targetItem.dataset.shape, targetItem.dataset.color, targetItem.dataset.title);
+                    }
+                });
+                
+                if (allInsignias.length > 0) {
+                    updateGlyphDisplay(allInsignias[0].shape, allInsignias[0].color, allInsignias[0].title);
+                } else {
+                    svgContainer.innerHTML = '';
+                    titleContainer.textContent = 'NO HAY INSIGNIAS';
+                }
             }
+
             function applyPalette(index) { if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; var key = PALETTE_KEYS[index]; if (key) { document.body.style.setProperty('--color-accent-primary', PALETTES[key]); } }
             function updateSoundToggleButtons() { var text = 'SONIDO: ' + (state.settings.soundEnabled ? 'ON' : 'OFF'); document.querySelectorAll('.sound-toggle-button').forEach(function(btn) { btn.textContent = text; }); }
             function renderPaletteSubMenus() { document.querySelectorAll('.palette-submenu').forEach(function(submenu) { submenu.innerHTML = ''; if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; PALETTE_KEYS.forEach(function(key, index) { var button = document.createElement('button'); button.textContent = key; button.setAttribute('data-palette-index', index); if (typeof PALETTES !== 'undefined' && PALETTES[key]) { button.style.color = PALETTES[key]; } submenu.appendChild(button); }); }); }
@@ -983,82 +835,23 @@
                 return String(n);
             }
 
-            /**
-             * Retorna la forma gramatical correcta de un sustantivo según el número.
-             * @param {number} num - El número que determina singular o plural
-             * @param {object} sujeto - El objeto sujeto con formas singular (s) y plural (p)
-             * @param {boolean} conArticulo - Si debe incluir artículo (un/una para 1)
-             * @returns {string} La forma correcta con o sin artículo
-             */
-            function getGrammaticalForm(num, sujeto, conArticulo = false) {
-                if (num === 1) {
-                    if (conArticulo) {
-                        var articulo = sujeto.g === 'f' ? 'una' : 'un';
-                        return articulo + ' ' + sujeto.s;
-                    }
-                    return sujeto.s;
-                }
-                return sujeto.p;
-            }
-
-            /**
-             * Convierte un número y sustantivo a su representación literal con concordancia.
-             * Ejemplo: (1, {s: "flor", p: "flores", g: "f"}) => "1 flor"
-             * Ejemplo: (5, {s: "flor", p: "flores", g: "f"}) => "5 flores"
-             * @param {number} num - El número
-             * @param {object} sujeto - El objeto sujeto
-             * @param {boolean} usarLiteral - Si usar palabra literal del número o dígito
-             * @returns {string} Representación con concordancia correcta
-             */
-            function numberWithSubject(num, sujeto, usarLiteral = false) {
-                var numeroStr = usarLiteral ? numberToLiteral(num, sujeto.g) : String(num);
-                var sustantivo = getGrammaticalForm(num, sujeto, false);
-                return numeroStr + ' ' + sustantivo;
-            }
-
             var QuestionGenerator = {
                 thematicPacks: [ { tema: "PARQUE", sujetos: [{p: "flores", s: "flor", g: "f", cont: {p:"ramos", s:"ramo"}}], personajes: ["Sofía", "Mateo"], verbos: {gain: "encontró", loss: "perdió"} }, { tema: "FIESTA", sujetos: [{p: "globos", s: "globo", g: "m", cont: {p:"grupos", s:"grupo"}}, {p: "caramelos", s: "caramelo", g: "m", cont: {p:"bolsas", s:"bolsa"}}], personajes: ["Leo", "Valentina"], verbos: {gain: "recibió", loss: "repartió"} }, { tema: "TIENDA", sujetos: [{p: "juguetes", s: "juguete", g: "m", cont: {p:"cajas", s:"caja"}}, {p: "libros", s: "libro", g: "m", cont: {p:"pilas", s:"pila"}}], personajes: ["Laura", "Daniel"], verbos: {gain: "compró", loss: "vendió"} } ],
                 templates: {
-                    'SUMAS_2': ["{personaje} estaba coleccionando {sujeto_p} en el parque y ya tenía {n1}. Mientras caminaba, un amigo le regaló {n2} más. ¿Cuál es el número total de {sujeto_p} que tiene ahora?","En un estante de la tienda había {n1} {sujeto_p}. Un repartidor llegó y colocó {n2} {sujeto_p} adicionales. ¿Cuántos {sujeto_p} hay en total en el estante?","{personaje} fue a la tienda y {verbo_gain} {n1} {sujeto_p}. Al día siguiente, volvió y {verbo_gain} {n2} {sujeto_p} más. ¿Cuántos {sujeto_p} {verbo_gain} en total?","En un jardín, {personaje} plantó {n1} {sujeto_p}. Su vecino plantó {n2} {sujeto_p} al lado. ¿Cuántas {sujeto_p} hay ahora entre los dos jardines?","Un equipo de construcción tiene {n1} ladrillos. Si reciben una nueva entrega con {n2} ladrillos más, ¿cuál es el total de ladrillos disponibles?","Para una receta, {personaje} necesita {n1} huevos y {n2} manzanas. ¿Cuántos ingredientes principales necesita en total?","Un autobús comienza su ruta con {n1} pasajeros. En la primera parada, suben {n2} pasajeros nuevos. ¿Cuántas personas viajan ahora en el autobús?","{personaje} tiene una colección de {n1} estampillas. Por su cumpleaños, le regalan un álbum con {n2} estampillas nuevas. ¿Cuántas estampillas tiene ahora en su colección?","En una granja hay {n1} gallinas. El granjero compra {n2} gallinas más para ampliar el gallinero. ¿Cuántas gallinas hay en total en la granja?","Una biblioteca tiene {n1} {sujeto_p} de ciencia ficción. Si adquieren una nueva colección de {n2} {sujeto_p} del mismo género, ¿cuál es el nuevo total de {sujeto_p} de ciencia ficción?","En un bol de frutas hay {n1} {sujeto_p} rojas y {n2} verdes. ¿Cuántas {sujeto_p} hay en total en el bol?","{personaje} caminó {n1} kilómetros por la mañana y {n2} kilómetros por la tarde. ¿Cuántos kilómetros caminó en todo el día?","Un videojuego tiene {n1} niveles principales. Una nueva expansión añade {n2} niveles extra. ¿Cuántos niveles tiene el juego ahora?","En un estuche hay {n1} lápices de colores. {personaje} guarda {n2} lápices más que encontró. ¿Cuántos lápices hay ahora en el estuche?","{personaje} leyó {n1} páginas de un libro el lunes y {n2} páginas el martes. ¿Cuántas páginas ha leído en esos dos días?","Un equipo de fútbol marcó {n1} goles en el primer tiempo y {n2} goles en el segundo. ¿Cuántos goles marcaron en todo el partido?","Hay {n1} pájaros en la rama de un árbol. Llegan volando {n2} pájaros más y se posan en la misma rama. ¿Cuántos pájaros hay ahora?","La temperatura por la mañana era de {n1} grados. Al mediodía, la temperatura subió {n2} grados. ¿Cuál es la nueva temperatura?","{personaje} tiene {n1} cromos repetidos. Si intercambia con un amigo y consigue {n2} cromos que no tenía, ¿cuántos cromos tiene al final de su colección?","Un pastel se corta en {n1} trozos para una fiesta. Al ver que no es suficiente, cortan otro pastel en {n2} trozos. ¿Cuántos trozos de pastel hay disponibles en total?", "En un videojuego, {personaje} encontró un cofre con {n1} gemas y luego venció a un enemigo que le dio {n2} gemas adicionales. ¿Cuántas gemas obtuvo en total?","Una historia cuenta que un dragón dormía sobre {n1} monedas de oro. Un aventurero añadió {n2} monedas más al tesoro. ¿Sobre cuántas monedas duerme ahora el dragón?","La misión espacial Apolo tenía {n1} objetivos principales. La misión Artemis añadió {n2} nuevos objetivos a la exploración lunar. ¿Cuántos objetivos hay en total?","Un sistema informático procesó {n1} peticiones en un segundo y {n2} peticiones en el siguiente. ¿Cuál fue el total de peticiones procesadas en esos dos segundos?","En una excavación arqueológica se encontraron {n1} artefactos en el primer nivel y {n2} en un nivel más profundo. ¿Cuántos artefactos se han descubierto en total?"],
-                    'SUMAS_3': ["En una excursión al parque, Mateo encontró {n1} piedras lisas. Más tarde, recogió {n2} piedras brillantes y justo antes de irse, su amiga le regaló {n3} de colores. ¿Cuántas piedras juntó Mateo en total?","Una tienda de juguetes recibió una caja con {n1} carritos el lunes. El miércoles, llegó un segundo pedido con {n2} carritos y el viernes compraron {n3} más. ¿Cuántos carritos nuevos llegaron en toda la semana?","Laura está jugando a un videojuego. En la primera partida consiguió {n1} puntos, en la segunda {n2} puntos y en la tercera rompió su récord con {n3} puntos. ¿Cuántos puntos consiguió sumando las tres partidas?","{personaje} horneó {n1} galletas de chocolate para sus amigos, {n2} de avena para su familia y {n3} de vainilla para una fiesta. ¿Cuántas galletas horneó en total?","Para una campaña de donación, una biblioteca recibió {n1} {sujeto_p} de misterio, {n2} de fantasía y {n3} de historia de diferentes donantes. ¿Cuántos {sujeto_p} nuevos se donaron en total?","Un granjero cosechó {n1} sacos de manzanas, {n2} sacos de peras y {n3} sacos de naranjas en un día. ¿Cuántos sacos de fruta cosechó en total?","{personaje} tiene {n1} monedas en su bolsillo izquierdo, {n2} en el bolsillo derecho y encontró {n3} más en su alcancía. ¿Cuánto dinero tiene en total?","Para construir una torre de juguete, se usaron {n1} bloques rojos en la base, {n2} bloques azules en el medio y {n3} bloques verdes en la cima. ¿Cuántos bloques tiene la torre?","En un gran acuario hay {n1} peces dorados, {n2} peces payaso y {n3} peces ángel en el mismo tanque. ¿Cuántos de estos tres tipos de peces hay en total?","Un tren de cercanías sale con {n1} pasajeros. En la primera parada suben {n2} personas y en la segunda parada suben {n3} más. ¿Cuántos pasajeros viajan ahora en el tren?","En el carrito del supermercado, {personaje} puso {n1} refrescos, {n2} zumos y {n3} botellas de agua. ¿Cuántas bebidas compró en total?","Un jardín botánico tiene {n1} tipos de rosas, {n2} tipos de tulipanes y {n3} tipos de margaritas. ¿Cuántos tipos de estas flores hay en el jardín?","Para hacer un disfraz, {personaje} usó {n1} metros de tela, {n2} metros de cinta decorativa y {n3} metros de encaje. ¿Cuántos metros de material usó en total?","En un safari fotográfico, un explorador vio {n1} monos, {n2} leones y {n3} elefantes. ¿Cuántos de estos tres animales vio en total?","Una pizzería vendió {n1} pizzas de queso por la mañana, {n2} de pepperoni por la tarde y {n3} vegetarianas por la noche. ¿Cuántas pizzas vendió en todo el día?","{personaje} observó {n1} estrellas fugaces el viernes, {n2} el sábado y {n3} el domingo durante una lluvia de meteoros. ¿Cuántas vio en todo el fin de semana?","Un paquete de Amazon contiene {n1} {sujeto_p}, otro paquete contiene {n2} y un tercero que acaba de llegar tiene {n3}. ¿Cuántos {sujeto_p} hay si se juntan todos?","Para decorar una fiesta, se inflaron {n1} {sujeto_p} rojos, {n2} azules y {n3} amarillos. ¿Cuántos {sujeto_p} se usaron en total para la decoración?","En un videojuego, {personaje} encontró un cofre con {n1} pociones de vida, otro con {n2} de maná y un tercero con {n3} de fuerza. ¿Cuántas pociones tiene ahora?","{personaje} escribió {n1} emails por la mañana, respondió {n2} por la tarde y envió {n3} más por la noche. ¿Cuántos emails gestionó en todo el día?", "En una carrera de relevos, el primer corredor corrió {n1} metros, el segundo {n2} metros y el último corredor completó la carrera con {n3} metros. ¿Cuál fue la distancia total de la carrera?","Un coleccionista compró un lote de cómics con {n1} de superhéroes, {n2} de ciencia ficción y {n3} de manga. ¿Cuántos cómics compró en total?","Para un proyecto de ciencias, se mezclaron {n1} mililitros de una sustancia, {n2} de otra y {n3} de una tercera. ¿Cuál es el volumen total de la mezcla?","Una banda de música tiene {n1} canciones en su primer álbum, {n2} en el segundo y están grabando {n3} nuevas para el tercero. ¿Cuántas canciones tendrán en total?","En tres días de festival, un puesto de comida vendió {n1} perritos calientes el primer día, {n2} el segundo y {n3} el tercero. ¿Cuántos vendieron en total?",
-                        "{personaje} está preparando {n1} bolsas para una excursión con {n2} bocadillos en cada una, y luego añade {n3} {sujeto_p} extra. ¿Cuántos {sujeto_p} hay en total?",
-                        "En un acuario, hay {n1} peceras con {n2} peces cada una, y en una pecera especial hay {n3} peces tropicales. ¿Cuántos peces hay en total?",
-                        "Un arquitecto diseña {n1} edificios con {n2} ventanas cada uno, y un último edificio con {n3} ventanas panorámicas. ¿Cuántas ventanas hay en total?",
-                        "Para una competencia, {personaje} fabricó {n1} aviones de papel, su hermano hizo {n2} y su prima hizo {n3}. ¿Cuántos aviones tienen entre los tres?",
-                        "En tres estantes de una vitrina hay {n1} {sujeto_p} en el primero, {n2} en el segundo y {n3} en el tercero. ¿Cuántos {sujeto_p} hay en total en la vitrina?"],
-                    'RESTAS': ["{personaje} tenía {n1} {sujeto_p} en su colección, pero accidentalmente {verbo_loss} {n2}. ¿Cuántos le quedan ahora?","Un árbol tenía {n1} {sujeto_p} maduras. Por la tarde, el viento sopló fuerte e hizo caer {n2} de ellas. ¿Cuántas {sujeto_p} permanecen en el árbol?","Sobre la mesa había {n1} galletas recién horneadas. {personaje} y sus amigos se comieron {n2} mientras estaban calientes. ¿Cuántas galletas quedaron en el plato?","{personaje} disponía de {n1} {sujeto_p} nuevos para un proyecto escolar. Si ya ha utilizado {n2}, ¿cuántos {sujeto_p} le quedan disponibles?","Un estacionamiento con capacidad para {n1} coches está casi lleno. Si {n2} coches se van, ¿cuántos coches quedan estacionados?","Para una fiesta, {personaje} infló {n1} {sujeto_p}. Durante los juegos, lamentablemente se pincharon {n2}. ¿Cuántos {sujeto_p} inflados le quedan?","De un total de {n1} tareas para la semana, {personaje} ya ha completado {n2} de ellas. ¿Cuántas tareas le faltan por completar?","Una tienda de videojuegos tenía {n1} copias de un nuevo lanzamiento. Durante el fin de semana de estreno, vendieron {n2} copias. ¿Cuántos videojuegos quedan en el inventario?","{personaje} había ahorrado {n1} monedas en su alcancía. Si tuvo que gastar {n2} monedas en un dulce, ¿cuántas monedas le quedan?","Un tanque de agua para riego contenía {n1} litros. Si se utilizaron {n2} litros para regar todo el jardín, ¿cuánta agua queda en el tanque?","En una carrera de {n1} vueltas, un piloto ya ha completado {n2} de ellas. ¿Cuántas vueltas le faltan para terminar la carrera?","Una estantería de una biblioteca contenía {n1} {sujeto_p}. Si los usuarios han tomado prestados {n2}, ¿cuántos {sujeto_p} quedan en la estantería?","De una pizza familiar cortada en {n1} porciones, los comensales se comen {n2} porciones. ¿Cuántas porciones de pizza quedan?","{personaje} empezó un videojuego con {n1} vidas. Tras una fase difícil, perdió {n2} vidas. ¿Con cuántas vidas continúa jugando?","La batería de un dispositivo estaba cargada al {n1}%. Después de ver una película, la carga bajó un {n2}%. ¿Qué porcentaje de batería queda?","Un libro tiene {n1} páginas en total. Si {personaje} ya ha leído {n2} páginas, ¿cuántas le faltan por leer para terminarlo?","Se esperaban {n1} invitados a una fiesta de cumpleaños. A última hora, {n2} de ellos cancelaron. ¿Cuántos invitados asistieron finalmente?","{personaje} fue de compras con {n1} euros en su cartera. Si pagó {n2} euros por una camiseta, ¿cuánto dinero le queda?","Un vuelo tiene una duración total de {n1} minutos. Si ya han pasado {n2} minutos de vuelo, ¿cuántos minutos faltan para aterrizar?",
-                        "En un videojuego, {personaje} tenía {n1} vidas acumuladas. Después de enfrentar un jefe final, perdió {n2} vidas. ¿Cuántas vidas le quedan?",
-                        "Un restaurante preparó {n1} platos para un evento. Al final de la noche, se habían servido {n2} platos. ¿Cuántos platos quedaron sin servir?",
-                        "Para una mudanza, había {n1} cajas empacadas. Si ya se transportaron {n2} cajas al nuevo hogar, ¿cuántas cajas quedan por transportar?",
-                        "Un programador tenía {n1} líneas de código en su proyecto. Después de optimizar, eliminó {n2} líneas redundantes. ¿Cuántas líneas de código tiene ahora?",
-                        "{personaje} descargó {n1} aplicaciones en su teléfono. Después de revisar, decidió desinstalar {n2} que no usaba. ¿Cuántas aplicaciones conservó?",
-                        "En una granja avícola había {n1} huevos recolectados. Si {n2} de ellos se vendieron en el mercado local, ¿cuántos huevos quedan en la granja?",
-                        "Un museo tenía {n1} {sujeto_p} en exhibición. Si prestaron {n2} a otro museo para una exposición temporal, ¿cuántos {sujeto_p} quedan en el museo original?",
-                        "Durante una tormenta, un árbol tenía {n1} frutas maduras. El viento fuerte hizo caer {n2} de ellas. ¿Cuántas frutas quedaron colgando del árbol?",
-                        "Un científico tenía {n1} muestras para analizar. Después de procesar {n2} muestras en el laboratorio, ¿cuántas muestras le quedan por analizar?",
-                        "{personaje} había guardado {n1} monedas en diferentes cofres. Si donó {n2} monedas para una causa benéfica, ¿cuántas monedas conserva?","En un rebaño había {n1} ovejas. El pastor tuvo que vender {n2} ovejas en el mercado. ¿Cuántas ovejas le quedan en el rebaño?"],
-                    'MULTIPLICACION': ["{personaje} está organizando su colección en {n1} {cont_p}. Si en cada una coloca {n2} {sujeto_p}, ¿cuántos {sujeto_p} tiene en total?","Una clase de arte necesita {n1} {cont_p} para un mural. Si cada {cont_s} debe contener {n2} {sujeto_p} de colores, ¿cuántos {sujeto_p} se requieren en total?","Un edificio de oficinas tiene {n1} pisos, y en cada piso se han instalado {n2} ventanas. ¿Cuántas ventanas tiene el edificio en su totalidad?","Cada paquete de galletas que {verbo_gain} {personaje} contiene {n2} galletas. Si compra {n1} paquetes, ¿cuántas galletas tiene en total?","En una granja hay {n1} corrales y en cada corral viven exactamente {n2} cerdos. ¿Cuántos cerdos hay en toda la granja?","Un álbum de fotos familiar tiene {n1} páginas. Si en cada página se pueden colocar {n2} fotos, ¿cuál es la capacidad total de fotos del álbum?","{personaje} está diseñando un huerto con {n1} filas. Si en cada fila decide plantar {n2} semillas de tomate, ¿cuántas semillas plantará en total?","En una exhibición de coches, hay {n1} vehículos y cada uno tiene {n2} ruedas. ¿Cuántas ruedas hay en toda la exhibición?","Cada caja de lápices nueva contiene {n2} lápices de colores. Si una escuela compra {n1} cajas para sus estudiantes, ¿cuántos lápices ha comprado en total?","{personaje} se ha propuesto leer {n2} páginas de un libro cada día. Si mantiene este ritmo durante {n1} días, ¿cuántas páginas habrá leído en total?","Un tablero de ajedrez se compone de {n1} filas y {n2} columnas. ¿Cuántas casillas tiene el tablero en total?","Si una araña común tiene {n2} patas, ¿cuántas patas tendrían {n1} arañas juntas?","En un restaurante, cada menú del día cuesta {n2} euros. Un grupo de {n1} amigos pide un menú cada uno. ¿Cuál será el coste total de su comida?","Si una hora se compone de {n2} minutos, ¿cuántos minutos hay en un periodo de {n1} horas?","Un cine pequeño tiene {n1} filas de butacas. Si cada fila tiene {n2} asientos, ¿cuál es el aforo total del cine?","{personaje} camina a un ritmo constante de {n1} pasos por minuto. ¿Cuántos pasos dará si camina durante {n2} minutos?","En un videojuego, cada {sujeto_s} dorado que recoges vale {n2} puntos. Si consigues {n1} de ellos, ¿cuántos puntos obtienes?","Un panadero prepara {n1} bandejas de magdalenas para vender. Si en cada bandeja hornea {n2} magdalenas, ¿cuántas ha hecho en total?","Un teclado de ordenador estándar tiene aproximadamente {n1} hileras de teclas con {n2} teclas en cada una. ¿Cuántas teclas tiene en total?","Si para ensamblar cada {sujeto_s} se necesitan {n2} tornillos, ¿cuántos tornillos se necesitarán en total para fabricar {n1} {sujeto_p}?",
-                        "En una competencia de robótica, cada equipo de {n1} participantes construyó {n2} robots. ¿Cuántos robots se construyeron en total?",
-                        "{personaje} organiza su biblioteca digital en {n1} carpetas, y en cada carpeta guarda {n2} archivos. ¿Cuántos archivos tiene en total?",
-                        "Un satélite orbita la Tierra {n1} veces al día. Si cada órbita toma {n2} minutos, ¿cuántos minutos orbita el satélite en un día?",
-                        "Para una campaña publicitaria, se imprimen {n1} lotes de pósters, con {n2} pósters en cada lote. ¿Cuántos pósters se imprimen en total?",
-                        "Un edificio tiene {n1} ascensores, y cada ascensor puede transportar {n2} personas. ¿Cuántas personas pueden viajar simultáneamente en todos los ascensores?",
-                        "En un videojuego de estrategia, {personaje} controla {n1} bases y en cada base entrena {n2} soldados. ¿Cuántos soldados tiene en total?",
-                        "Una cadena de tiendas tiene {n1} sucursales, y cada sucursal emplea a {n2} trabajadores. ¿Cuántos empleados trabajan en toda la cadena?",
-                        "Un compositor escribe {n1} canciones, y cada canción tiene {n2} versos. ¿Cuántos versos escribió en total?",
-                        "Para un experimento científico, se necesitan {n1} matraces, y en cada matraz se colocan {n2} mililitros de solución. ¿Cuántos mililitros se usan en total?",
-                        "Un tren de carga lleva {n1} vagones, y cada vagón transporta {n2} toneladas de mercancía. ¿Cuántas toneladas transporta el tren completo?"],
-                    'DIVISIONES': ["{personaje} quiere repartir equitativamente {total} {sujeto_p} entre {n1} amigos. ¿Cuántos {sujeto_p} recibirá cada uno?","Una fábrica empaqueta {total} {sujeto_p} en {cont_p}. Si en cada {cont_s} caben {n2} {sujeto_p}, ¿cuántas {cont_p} se necesitarán?","Un grupo de {n1} amigos encontró un tesoro con {total} canicas. Si se reparten las canicas en partes iguales, ¿cuántas canicas le corresponden a cada amigo?","{personaje} tiene {total} pegatinas para su colección y un álbum. Si en cada página del álbum caben {n2} pegatinas, ¿cuántas páginas podrá llenar por completo?","Un profesor tiene {total} lápices nuevos para repartir de forma equitativa entre los {n1} estudiantes de su clase. ¿Cuántos lápices le dará a cada estudiante?","Para un juego de mesa, se deben repartir {total} cartas entre {n1} jugadores. ¿Cuántas cartas le corresponden a cada jugador para empezar la partida?","Una cuerda que mide {total} metros de largo debe cortarse en trozos de exactamente {n2} metros cada uno. ¿Cuántos trozos iguales se pueden obtener?","Para un evento, se deben organizar {total} sillas en el patio, formando filas de {n2} sillas cada una. ¿Cuántas filas completas se podrán formar?","{personaje} horneó {total} galletas. Si quiere guardarlas en bolsas para regalar, y en cada bolsa pone {n2} galletas, ¿cuántas bolsas necesitará?","Un agricultor recolectó {total} manzanas de sus árboles y las quiere empaquetar en cajas que contienen {n2} manzanas cada una. ¿Cuántas cajas podrá llenar?","Se deben transportar {total} pasajeros en una serie de botes, cada uno con capacidad para {n1} personas. ¿Cuántos botes se necesitan para transportar a todos?","Un libro de {total} páginas debe ser leído en {n1} días. Para terminarlo a tiempo, ¿cuántas páginas se deben leer por día en promedio?","Con {total} flores recién cortadas se quieren hacer ramos de {n2} flores cada uno. ¿Cuántos ramos idénticos se pueden hacer?","Un premio de lotería de {total} euros se reparte en partes iguales entre {n1} ganadores. ¿Cuánto dinero recibe cada ganador?","Una jarra con {total} litros de refresco se quiere servir en vasos de {n2} litros de capacidad. ¿Cuántos vasos se pueden llenar por completo?","Un programador necesita escribir un programa de {total} líneas de código en {n1} horas. ¿Cuántas líneas de código debe escribir por hora en promedio?","Una baraja española de {total} cartas se divide para un juego en montones de {n2} cartas. ¿Cuántos montones se pueden formar?","Una granja avícola recoge {total} huevos y los coloca en cartones con capacidad para {n2} huevos. ¿Cuántos cartones se necesitan para empaquetar todos los huevos?","Un camino de {total} kilómetros se divide en {n1} etapas de igual longitud para una carrera. ¿Cuántos kilómetros tiene cada etapa?","Una película tiene una duración de {total} minutos. Si la cadena de televisión la divide en {n2} bloques iguales para meter anuncios, ¿cuánto dura cada bloque de película?",
-                        "{personaje} tiene {total} sellos postales para organizar en {n1} álbumes. ¿Cuántos sellos irán en cada álbum si los reparte equitativamente?",
-                        "Una empresa de catering debe servir {total} porciones de comida usando bandejas que contienen {n2} porciones cada una. ¿Cuántas bandejas necesitarán?",
-                        "Un jardinero tiene {total} plantas para colocar en macetas. Si cada maceta puede albergar {n2} plantas, ¿cuántas macetas necesita?",
-                        "Para un torneo de ajedrez, hay {total} participantes que deben formar equipos de {n1} jugadores. ¿Cuántos equipos se pueden formar?",
-                        "Una fábrica produce {total} unidades de un producto al día. Si cada caja contiene {n2} unidades, ¿cuántas cajas se llenan diariamente?",
-                        "Un contador tiene {total} facturas para archivar en carpetas. Si cada carpeta puede contener {n2} facturas, ¿cuántas carpetas utilizará?",
-                        "{personaje} coleccionó {total} chapas conmemorativas y quiere exhibirlas en vitrinas. Si cada vitrina muestra {n2} chapas, ¿cuántas vitrinas necesita?",
-                        "Una compañía aérea debe transportar {total} pasajeros usando aviones con capacidad para {n1} personas. ¿Cuántos vuelos se necesitan?",
-                        "Un chef preparó {total} porciones de postre para servir en platos. Si cada plato lleva {n2} porciones, ¿cuántos platos preparará?",
-                        "Una editorial imprimió {total} páginas de un manuscrito. Si cada capítulo tiene {n1} páginas, ¿cuántos capítulos tiene el manuscrito?"]
+                    'SUMAS_2': ["{personaje} estaba coleccionando {sujeto_p} en el parque y ya tenía {n1}. Mientras caminaba, un amigo le regaló {n2} más. ¿Cuál es el número total de {sujeto_p} que tiene ahora?","En un estante de la tienda había {n1} {sujeto_p}. Un repartidor llegó y colocó {n2} {sujeto_p} adicionales. ¿Cuántos {sujeto_p} hay en total en el estante?","¿Cuál es el número total de {sujeto_p} que tiene {personaje} ahora, si empezó con {n1} y más tarde un amigo le regaló {n2} más?"],
+                    'SUMAS_3': ["En una excursión al parque, Mateo encontró {n1} piedras lisas. Más tarde, recogió {n2} piedras brillantes y justo antes de irse, su amiga le regaló {n3} de colores. ¿Cuántas piedras juntó Mateo en total?","Una tienda de juguetes recibió una caja con {n1} carritos el lunes. El miércoles, llegó un segundo pedido con {n2} carritos y el viernes compraron {n3} más. ¿Cuántos carritos nuevos llegaron en toda la semana?"],
+                    'RESTAS': ["{personaje} tenía {n1} {sujeto_p} en su colección, pero accidentalmente {verbo_loss} {n2}. ¿Cuántos le quedan ahora?","Un árbol tenía {n1} {sujeto_p} maduras. Por la tarde, el viento sopló fuerte e hizo caer {n2} de ellas. ¿Cuántas {sujeto_p} permanecen en el árbol?","¿Cuántos {sujeto_p} le quedan a {personaje}, si de una colección de {n1} {verbo_loss} accidentalmente {n2}?"],
+                    'MULTIPLICACION': ["{personaje} está organizando su colección en {n1} {cont_p}. Si en cada una coloca {n2} {sujeto_p}, ¿cuántos {sujeto_p} tiene en total?","Un edificio de oficinas tiene {n1} pisos, y en cada piso se han instalado {n2} ventanas. ¿Cuántas ventanas tiene el edificio en su totalidad?","¿Cuántos {sujeto_p} tiene {personaje} en total si organizó su colección en {n1} {cont_p} y en cada una colocó {n2}?"],
+                    'DIVISIONES': [
+                        { template: "{personaje} quiere repartir equitativamente {total} {sujeto_p} entre {n1} amigos. ¿Cuántos {sujeto_p} recibirá cada uno?", answer: 'n2' },
+                        { template: "Una fábrica empaqueta {total} {sujeto_p} en {cont_p}. Si en cada {cont_s} caben {n2} {sujeto_p}, ¿cuántas {cont_p} se necesitarán?", answer: 'n1' },
+                        { template: "Un grupo de {n1} amigos encontró un tesoro con {total} canicas. Si se reparten las canicas en partes iguales, ¿cuántas canicas le corresponden a cada amigo?", answer: 'n2' },
+                        { template: "{personaje} tiene {total} pegatinas para su colección y un álbum. Si en cada página del álbum caben {n2} pegatinas, ¿cuántas páginas podrá llenar por completo?", answer: 'n1' },
+                        { template: "Un profesor tiene {total} lápices nuevos para repartir de forma equitativa entre los {n1} estudiantes de su clase. ¿Cuántos lápices le dará a cada estudiante?", answer: 'n2' },
+                        { template: "Una compañía aérea debe transportar {total} pasajeros usando aviones con capacidad para {n1} personas. ¿Cuántos vuelos se necesitan?", answer: 'n2' },
+                        { template: "¿Cuántos vuelos se necesitarán para transportar a {total} pasajeros si los aviones tienen capacidad para {n1} personas cada uno?", answer: 'n2' },
+                        { template: "Para saber cuántas páginas podrá llenar {personaje}, divide las {total} pegatinas que tiene entre las {n2} que caben en cada página del álbum. ¿Cuál es el resultado?", answer: 'n1' }
+                    ]
                 },
                 getRandomElement: function(arr) { return arr[Math.floor(PRNG.next() * arr.length)]; },
                 getRandomNumber: function(min, max) { return Math.floor(PRNG.next() * (max - min + 1)) + min; },
@@ -1077,8 +870,10 @@
                     var pack = this.getRandomElement(this.thematicPacks);
                     var sujeto = this.getRandomElement(pack.sujetos);
                     var personaje = this.getRandomElement(pack.personajes);
-                    var n1, n2, n3, correctAnswer, total, template, templateArray;
+                    var n1, n2, n3, correctAnswer, total, template, templateArray, templateObj;
                     var context = {};
+
+                    templateArray = this.templates[type];
 
                     if (type === 'SUMAS') {
                         if (solvedInCategory >= 20) {
@@ -1091,25 +886,31 @@
                             correctAnswer = n1 + n2;
                             templateArray = this.templates['SUMAS_2'];
                         }
-                    } else {
-                        templateArray = this.templates[type];
-                        if (type === 'RESTAS') {
-                            n1 = this.getRandomNumber(difficultyConfig.n1_min, difficultyConfig.n1_max); n2 = this.getRandomNumber(difficultyConfig.n2_min, Math.min(n1 - 1, difficultyConfig.n2_max));
-                            correctAnswer = n1 - n2;
-                        } else if (type === 'MULTIPLICACION') {
-                            n1 = this.getRandomNumber(2, 5); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
-                            if (PRNG.next() > 0.5) { var temp = n1; n1 = n2; n2 = temp; }
-                            correctAnswer = n1 * n2;
-                        } else if (type === 'DIVISIONES') {
-                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(2, 5);
-                            if (n1 === 0 || n2 === 0) { n2 = 2; }
-                            total = n1 * n2;
-                            context.total = (PRNG.next() > 0.5) ? numberToLiteral(total, sujeto.g) : total;
-                            template = this.getRandomElement(templateArray);
-                            if (template.indexOf('amigos') !== -1 || template.indexOf('recibirá') !== -1 || template.indexOf('estudiantes') !== -1 || template.indexOf('jugadores') !== -1) { correctAnswer = n2; } else { correctAnswer = n1; }
+                        template = this.getRandomElement(templateArray);
+                    } else if (type === 'RESTAS') {
+                        n1 = this.getRandomNumber(difficultyConfig.n1_min, difficultyConfig.n1_max); n2 = this.getRandomNumber(difficultyConfig.n2_min, Math.min(n1 - 1, difficultyConfig.n2_max));
+                        correctAnswer = n1 - n2;
+                        template = this.getRandomElement(templateArray);
+                    } else if (type === 'MULTIPLICACION') {
+                        n1 = this.getRandomNumber(2, 5); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
+                        if (PRNG.next() > 0.5) { var temp = n1; n1 = n2; n2 = temp; }
+                        correctAnswer = n1 * n2;
+                        template = this.getRandomElement(templateArray);
+                    } else if (type === 'DIVISIONES') {
+                        n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(2, 5);
+                        if (n1 === 0 || n2 === 0) { n2 = 2; }
+                        total = n1 * n2;
+                        context.total = (PRNG.next() > 0.5) ? numberToLiteral(total, sujeto.g) : total;
+                        
+                        templateObj = this.getRandomElement(templateArray);
+                        template = templateObj.template;
+                        
+                        if (templateObj.answer === 'n1') {
+                            correctAnswer = n1;
+                        } else {
+                            correctAnswer = n2;
                         }
                     }
-                    if (!template) { template = this.getRandomElement(templateArray); }
 
                     context.personaje = personaje; 
                     context.n1 = (PRNG.next() > 0.5) ? numberToLiteral(n1, sujeto.g) : n1;
@@ -1136,7 +937,6 @@
                     state.quiz.currentDifficulty = d;
                     state.quiz.isAnswered = false;
                     this.updateHud();
-                    this.startTimer();
                     this.renderQuizUI();
                     EventBus.emit('system:requestNavigation', { windowId: 'game' });
                 },
@@ -1150,7 +950,6 @@
                     if (isCorrect) { 
                         AudioManager.playSound('success'); 
                         state.quiz.streak++;
-                        // MEJORA: Crear partículas de celebración
                         var buttonRect = optionButtons[selectedIndex].getBoundingClientRect();
                         var centerX = buttonRect.left + buttonRect.width / 2;
                         var centerY = buttonRect.top + buttonRect.height / 2;
@@ -1214,11 +1013,12 @@
                         button.setAttribute('data-option-index', index);
                         ui.quizOptions.appendChild(button);
                     });
+                    this.startTimer();
                 }
             };
             
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.2.0 (ENHANCED)...');
+                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.5.1 (CORE UPDATE)...');
                 loadSettings(); loadProfilesFromStorage(); applyPalette(state.settings.paletteIndex); updateSoundToggleButtons(); 
                 calculateLayout();
                 renderPlayerKeyboard(); 
@@ -1297,7 +1097,6 @@
                 EventBus.on('quiz:start', function(d) { QuizManager.startQuiz(d.difficulty); });
                 EventBus.on('quiz:answer', function(d) { QuizManager.handleAnswer(d.selectedIndex); });
                 EventBus.on('quiz:victory', function() { 
-                    // Calcular insignia actual
                     if (state.activeProfile) {
                         var profile = state.profiles[state.activeProfile];
                         var totalSolved = 0;
@@ -1309,7 +1108,6 @@
                         rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1);
                         var insigniaShape = RANK_SHAPES[rankIndex];
                         
-                        // Mostrar insignia en la pantalla de victoria
                         var display3d = document.getElementById('insignia3dDisplay');
                         if (display3d && insigniaShape) {
                             display3d.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700');
@@ -1321,8 +1119,42 @@
                 EventBus.on('insignias:show', function() { document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); renderInsignias(); showWindow('insignias'); });
                 EventBus.on('insignias:hide', function() { showWindow(state.previousWindow); });
                 
+                var hoveredLevelCategory = null;
+
+                ui.levelGrid.addEventListener('mouseover', function(e) {
+                    var button = e.target.closest('button[data-difficulty]');
+                    if (button) {
+                        hoveredLevelCategory = button.getAttribute('data-difficulty');
+                    }
+                });
+
+                ui.levelGrid.addEventListener('mouseout', function(e) {
+                    hoveredLevelCategory = null;
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
+                        if (state.currentWindow === 'mainMenu' && hoveredLevelCategory && state.activeProfile) {
+                            console.log('[EGG] Combinación secreta activada para: ' + hoveredLevelCategory);
+                            var profile = state.profiles[state.activeProfile];
+                            if (profile) {
+                                for (var i = 0; i < 5; i++) {
+                                    profile.solvedQuestions[hoveredLevelCategory].push('EGG_' + Date.now() + i);
+                                }
+                                
+                                saveProfilesToStorage();
+                                populateLevelGrid();
+                                renderProfileRank();
+                                AudioManager.playSound('success');
+                            }
+                        }
+                    }
+                });
+                
                 setTimeout(function() { showWindow('title'); }, 1000);
                 console.log('[BOOT][INFO] PREFLIGHT OK. SISTEMA TOTALMENTE COMPATIBLE CON MANIFIESTO.');
             });
         })();
     </script>
+</body>
+</html>
