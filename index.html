@@ -196,6 +196,34 @@
             50% { transform: scale(1.1); }
         }
         
+        #profileStatsContainer {
+            display: flex;
+            gap: var(--gap-l);
+            background-color: rgba(10, 10, 10, 0.5);
+            border: 1px solid var(--color-surface);
+            padding: var(--gap-m);
+            margin-bottom: var(--gap-l);
+            border-radius: 4px;
+            font-size: clamp(0.8rem, 2.5vmin, 1.1rem);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: var(--color-text-passive);
+        }
+        .stat-value {
+            font-weight: bold;
+        }
+        #statValueAciertos { color: var(--color-success); }
+        #statValueErrores { color: var(--color-error); }
+        #statValuePrecision { color: var(--color-accent-gold); }
+
         #playerNameDisplay { 
             position: relative;
             width: min(90vw, calc(var(--k) * 8 + var(--gap-s) * 7)); 
@@ -514,6 +542,20 @@
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: MAIN MENU</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuMain">&#9881;</button><div id="settingsMenuMain" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
                 <div class="window-content">
                     <h2 id="mainMenuHeader">JUGADOR: <span id="profileDisplayName"></span><span id="rankInsigniaDisplay"></span></h2>
+                    <div id="profileStatsContainer">
+                        <div class="stat-item">
+                            <span class="stat-label">Aciertos</span>
+                            <span class="stat-value" id="statValueAciertos">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Errores</span>
+                            <span class="stat-value" id="statValueErrores">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Precisión</span>
+                            <span class="stat-value" id="statValuePrecision">0%</span>
+                        </div>
+                    </div>
                     <div id="levelGrid"></div><button id="backToProfilesButton" style="margin-top: 16px;">VOLVER A PERFILES</button>
                 </div>
                 <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
@@ -601,7 +643,7 @@
             var AudioManager = { audioCtx: null, init: function() { if (!this.audioCtx && (window.AudioContext || window.webkitAudioContext)) { try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { console.error("[AUDIO] Web Audio API not supported.", e); } } }, playSound: function(type) { if (!state.settings.soundEnabled || !this.audioCtx) return; var osc = this.audioCtx.createOscillator(); var gain = this.audioCtx.createGain(); osc.connect(gain); gain.connect(this.audioCtx.destination); var now = this.audioCtx.currentTime; switch(type) { case 'tick': osc.type = 'triangle'; osc.frequency.setValueAtTime(880, now); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); osc.start(now); osc.stop(now + 0.1); break; case 'success': osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); osc.start(now); osc.stop(now + 0.1); break; case 'error': osc.type = 'square'; osc.frequency.setValueAtTime(164.81, now); osc.frequency.exponentialRampToValueAtTime(73.42, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2); osc.start(now); osc.stop(now + 0.2); break; case 'navigate': osc.type = 'sine'; osc.frequency.setValueAtTime(330, now); osc.frequency.exponentialRampToValueAtTime(660, now + 0.15); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15); osc.start(now); osc.stop(now + 0.15); break; } } };
             
             function getDefaultSettings() { return { soundEnabled: true, paletteIndex: 0 }; }
-            function getEmptyProfileData() { return { solvedQuestions: { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false } }; }
+            function getEmptyProfileData() { return { solvedQuestions: { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false }, aciertos: 0, errores: 0 }; }
 
             var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: QUESTION_TIME, timerId: null } };
             var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), insignias: document.getElementById('insignias'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
@@ -629,7 +671,7 @@
             function loadSettings() { try { var stored = localStorage.getItem(SETTINGS_KEY); if(stored) { state.settings = JSON.parse(stored); } else { state.settings = getDefaultSettings(); } } catch (e) { console.error('[ERR][STORAGE] FALLO AL CARGAR CONFIGURACIÓN. APLICANDO VALORES POR DEFECTO.', e); state.settings = getDefaultSettings(); } }
             function saveProfilesToStorage() { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(state.profiles)); } catch (e) { console.error('[ERR][STORAGE] FALLO AL GUARDAR PERFILES.', e); } }
             function createDefaultProfile() { console.log('[STORAGE][INFO] NO SE ENCONTRARON PERFILES. CREANDO PERFIL POR DEFECTO...'); state.profiles = { 'PILOTO_DE_PRUEBAS': getEmptyProfileData() }; saveProfilesToStorage(); }
-            function loadProfilesFromStorage() { try { var storedData = localStorage.getItem(PROFILES_KEY); if (!storedData) { createDefaultProfile(); return; } var d = JSON.parse(storedData); if (typeof d !== 'object' || d === null || Object.keys(d).length === 0) { createDefaultProfile(); return; } var p = {}; var n = Object.keys(d); n.forEach(function(pn) { var op = d[pn] || {}; p[pn] = { solvedQuestions: op.solvedQuestions || { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: op.perfectRuns || { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false } }; }); state.profiles = p; } catch (e) { console.error('[ERR][STORAGE] DATOS DE PERFIL CORRUPTOS. CREANDO NUEVO SET DE PERFILES.', e); createDefaultProfile(); } }
+            function loadProfilesFromStorage() { try { var storedData = localStorage.getItem(PROFILES_KEY); if (!storedData) { createDefaultProfile(); return; } var d = JSON.parse(storedData); if (typeof d !== 'object' || d === null || Object.keys(d).length === 0) { createDefaultProfile(); return; } var p = {}; var n = Object.keys(d); n.forEach(function(pn) { var op = d[pn] || {}; p[pn] = { solvedQuestions: op.solvedQuestions || { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: op.perfectRuns || { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false }, aciertos: op.aciertos || 0, errores: op.errores || 0 }; }); state.profiles = p; } catch (e) { console.error('[ERR][STORAGE] DATOS DE PERFIL CORRUPTOS. CREANDO NUEVO SET DE PERFILES.', e); createDefaultProfile(); } }
             
             function showWindow(windowId) {
                 if (state.currentWindow === windowId) return;
@@ -695,6 +737,18 @@
             function renderProfiles() { ui.profilesList.innerHTML = ''; Object.keys(state.profiles).forEach(function(pn) { var li = document.createElement('li'); li.className = 'profile-entry'; var pb = document.createElement('button'); pb.className = 'interactive-button profile-button'; pb.textContent = pn; pb.setAttribute('data-profile-name', pn); var db = document.createElement('button'); db.className = 'delete-button'; db.textContent = 'X'; db.setAttribute('data-profile-name', pn); li.appendChild(pb); li.appendChild(db); ui.profilesList.appendChild(li); }); }
             function createInsigniaSVG(shape, color) { var base = `<svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 H60 V75 L30 90 L0 75 Z" fill="#141414" stroke="#0A0A0A" stroke-width="2"/>`; var coloredShape = shape.replace(/%%COLOR%%/g, color); return base + coloredShape + '</svg>'; }
             function renderProfileRank() { if (!state.activeProfile) return; var profile = state.profiles[state.activeProfile]; var totalSolved = 0; var categories = Object.keys(profile.solvedQuestions); for (var i = 0; i < categories.length; i++) { totalSolved += profile.solvedQuestions[categories[i]].length; } var rankIndex = Math.floor(totalSolved / 5); rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1); var insigniaShape = RANK_SHAPES[rankIndex]; ui.profileDisplayName.textContent = state.activeProfile; if(insigniaShape) { ui.rankInsigniaDisplay.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700'); } else { ui.rankInsigniaDisplay.innerHTML = ''; } }
+            function renderProfileStats() {
+                if (!state.activeProfile) return;
+                var profile = state.profiles[state.activeProfile];
+                var aciertos = profile.aciertos || 0;
+                var errores = profile.errores || 0;
+                var total = aciertos + errores;
+                var precision = (total === 0) ? 0 : (aciertos / total) * 100;
+
+                document.getElementById('statValueAciertos').textContent = aciertos;
+                document.getElementById('statValueErrores').textContent = errores;
+                document.getElementById('statValuePrecision').textContent = precision.toFixed(1) + '%';
+            }
             function populateLevelGrid() { 
                 ui.levelGrid.innerHTML = ''; 
                 if (!state.activeProfile) return; 
@@ -836,23 +890,50 @@
             }
 
             var QuestionGenerator = {
-                thematicPacks: [ { tema: "PARQUE", sujetos: [{p: "flores", s: "flor", g: "f", cont: {p:"ramos", s:"ramo"}}], personajes: ["Sofía", "Mateo"], verbos: {gain: "encontró", loss: "perdió"} }, { tema: "FIESTA", sujetos: [{p: "globos", s: "globo", g: "m", cont: {p:"grupos", s:"grupo"}}, {p: "caramelos", s: "caramelo", g: "m", cont: {p:"bolsas", s:"bolsa"}}], personajes: ["Leo", "Valentina"], verbos: {gain: "recibió", loss: "repartió"} }, { tema: "TIENDA", sujetos: [{p: "juguetes", s: "juguete", g: "m", cont: {p:"cajas", s:"caja"}}, {p: "libros", s: "libro", g: "m", cont: {p:"pilas", s:"pila"}}], personajes: ["Laura", "Daniel"], verbos: {gain: "compró", loss: "vendió"} } ],
-                templates: {
-                    'SUMAS_2': ["{personaje} estaba coleccionando {sujeto_p} en el parque y ya tenía {n1}. Mientras caminaba, un amigo le regaló {n2} más. ¿Cuál es el número total de {sujeto_p} que tiene ahora?","En un estante de la tienda había {n1} {sujeto_p}. Un repartidor llegó y colocó {n2} {sujeto_p} adicionales. ¿Cuántos {sujeto_p} hay en total en el estante?","¿Cuál es el número total de {sujeto_p} que tiene {personaje} ahora, si empezó con {n1} y más tarde un amigo le regaló {n2} más?"],
-                    'SUMAS_3': ["En una excursión al parque, Mateo encontró {n1} piedras lisas. Más tarde, recogió {n2} piedras brillantes y justo antes de irse, su amiga le regaló {n3} de colores. ¿Cuántas piedras juntó Mateo en total?","Una tienda de juguetes recibió una caja con {n1} carritos el lunes. El miércoles, llegó un segundo pedido con {n2} carritos y el viernes compraron {n3} más. ¿Cuántos carritos nuevos llegaron en toda la semana?"],
-                    'RESTAS': ["{personaje} tenía {n1} {sujeto_p} en su colección, pero accidentalmente {verbo_loss} {n2}. ¿Cuántos le quedan ahora?","Un árbol tenía {n1} {sujeto_p} maduras. Por la tarde, el viento sopló fuerte e hizo caer {n2} de ellas. ¿Cuántas {sujeto_p} permanecen en el árbol?","¿Cuántos {sujeto_p} le quedan a {personaje}, si de una colección de {n1} {verbo_loss} accidentalmente {n2}?"],
-                    'MULTIPLICACION': ["{personaje} está organizando su colección en {n1} {cont_p}. Si en cada una coloca {n2} {sujeto_p}, ¿cuántos {sujeto_p} tiene en total?","Un edificio de oficinas tiene {n1} pisos, y en cada piso se han instalado {n2} ventanas. ¿Cuántas ventanas tiene el edificio en su totalidad?","¿Cuántos {sujeto_p} tiene {personaje} en total si organizó su colección en {n1} {cont_p} y en cada una colocó {n2}?"],
-                    'DIVISIONES': [
-                        { template: "{personaje} quiere repartir equitativamente {total} {sujeto_p} entre {n1} amigos. ¿Cuántos {sujeto_p} recibirá cada uno?", answer: 'n2' },
-                        { template: "Una fábrica empaqueta {total} {sujeto_p} en {cont_p}. Si en cada {cont_s} caben {n2} {sujeto_p}, ¿cuántas {cont_p} se necesitarán?", answer: 'n1' },
-                        { template: "Un grupo de {n1} amigos encontró un tesoro con {total} canicas. Si se reparten las canicas en partes iguales, ¿cuántas canicas le corresponden a cada amigo?", answer: 'n2' },
-                        { template: "{personaje} tiene {total} pegatinas para su colección y un álbum. Si en cada página del álbum caben {n2} pegatinas, ¿cuántas páginas podrá llenar por completo?", answer: 'n1' },
-                        { template: "Un profesor tiene {total} lápices nuevos para repartir de forma equitativa entre los {n1} estudiantes de su clase. ¿Cuántos lápices le dará a cada estudiante?", answer: 'n2' },
-                        { template: "Una compañía aérea debe transportar {total} pasajeros usando aviones con capacidad para {n1} personas. ¿Cuántos vuelos se necesitan?", answer: 'n2' },
-                        { template: "¿Cuántos vuelos se necesitarán para transportar a {total} pasajeros si los aviones tienen capacidad para {n1} personas cada uno?", answer: 'n2' },
-                        { template: "Para saber cuántas páginas podrá llenar {personaje}, divide las {total} pegatinas que tiene entre las {n2} que caben en cada página del álbum. ¿Cuál es el resultado?", answer: 'n1' }
-                    ]
-                },
+                thematicPacks: [
+                    {
+                        tema: "PARQUE",
+                        personajes: ["Sofía", "Mateo"],
+                        sujetos: [{p: "flores", s: "flor", g: "f", cont: {p:"ramos", s:"ramo"}}, {p: "hojas", s: "hoja", g: "f", cont: {p:"montones", s:"montón"}}],
+                        templates: {
+                            'SUMAS': ["{personaje} coleccionaba {sujeto_p} y ya tenía {n1}. Mientras caminaba por el parque, encontró {n2} más. ¿Cuántas {sujeto_p} tiene ahora?", "En un jardín, un grupo de {n1} {sujeto_p} crecía junto a otro grupo de {n2} {sujeto_p}. ¿Cuántas hay en total?"],
+                            'RESTAS': ["{personaje} tenía un ramo con {n1} {sujeto_p}, pero se le cayeron {n2} por el camino. ¿Cuántas {sujeto_p} le quedan en el ramo?", "Un árbol tenía {n1} {sujeto_p} en una rama. El viento sopló e hizo caer {n2}. ¿Cuántas {sujeto_p} permanecen en la rama?"],
+                            'MULTIPLICACION': ["{personaje} hizo {n1} {cont_p}. Si en cada {cont_s} colocó {n2} {sujeto_p}, ¿cuántas {sujeto_p} usó en total?", "En el parque hay {n1} macetas y cada una tiene {n2} {sujeto_p}. ¿Cuántas {sujeto_p} hay en total?"],
+                            'DIVISIONES': [
+                                { template: "{personaje} quiere repartir {total} {sujeto_p} en {n1} {cont_p} iguales. ¿Cuántas {sujeto_p} pondrá en cada {cont_s}?", answer: 'n2' },
+                                { template: "Si {personaje} tiene {total} {sujeto_p} y hace {cont_p} con {n2} {sujeto_p} cada uno, ¿cuántos {cont_p} podrá hacer?", answer: 'n1' }
+                            ]
+                        }
+                    },
+                    {
+                        tema: "FIESTA",
+                        personajes: ["Leo", "Valentina"],
+                        sujetos: [{p: "globos", s: "globo", g: "m", cont: {p:"grupos", s:"grupo"}}, {p: "caramelos", s: "caramelo", g: "m", cont: {p:"bolsas", s:"bolsa"}}],
+                        templates: {
+                            'SUMAS': ["En una fiesta, {personaje} infló {n1} {sujeto_p} y luego infló {n2} más. ¿Cuántos {sujeto_p} infló en total?", "Valentina recibió {n1} {sujeto_p} en una bolsa y {n2} en otra. ¿Cuántos {sujeto_p} tiene en total?"],
+                            'RESTAS': ["{personaje} tenía {n1} {sujeto_p}, pero se le explotaron {n2}. ¿Cuántos {sujeto_p} le quedaron?", "De una bolsa con {n1} {sujeto_p}, Leo repartió {n2} a sus amigos. ¿Cuántos le quedaron?"],
+                            'MULTIPLICACION': ["{personaje} preparó {n1} {cont_p} de sorpresas. Si cada una tiene {n2} {sujeto_p}, ¿cuántos {sujeto_p} usó?", "Para decorar, se hicieron {n1} {cont_p} de {n2} {sujeto_p} cada uno. ¿Cuántos {sujeto_p} se usaron?"],
+                            'DIVISIONES': [
+                                { template: "{personaje} quiere repartir {total} {sujeto_p} entre {n1} amigos. ¿Cuántos {sujeto_p} le tocarán a cada uno?", answer: 'n2' },
+                                { template: "Si Valentina tiene {total} {sujeto_p} y los guarda en {cont_p} de {n2}, ¿cuántas {cont_p} necesitará?", answer: 'n1' }
+                            ]
+                        }
+                    },
+                    {
+                        tema: "TIENDA",
+                        personajes: ["Laura", "Daniel"],
+                        sujetos: [{p: "juguetes", s: "juguete", g: "m", cont: {p:"cajas", s:"caja"}}, {p: "libros", s: "libro", g: "m", cont: {p:"estantes", s:"estante"}}],
+                        templates: {
+                           'SUMAS': ["En un estante de la tienda había {n1} {sujeto_p}. Un repartidor colocó {n2} {sujeto_p} adicionales. ¿Cuántos {sujeto_p} hay ahora?", "{personaje} compró {n1} {sujeto_p} y su amigo le regaló {n2} más. ¿Cuántos tiene en total?"],
+                           'RESTAS': ["Había {n1} {sujeto_p} en una caja, pero {personaje} vendió {n2}. ¿Cuántos {sujeto_p} quedan en la caja?", "De {n1} {sujeto_p} que tenía una tienda, se devolvieron {n2} por estar defectuosos. ¿Cuántos quedaron para la venta?"],
+                           'MULTIPLICACION': ["Una tienda recibió {n1} {cont_p} y cada una contenía {n2} {sujeto_p}. ¿Cuántos {sujeto_p} llegaron en total?", "Si Daniel organiza los {sujeto_p} en {n1} {cont_p} con {n2} {sujeto_p} en cada uno, ¿cuántos {sujeto_p} ha organizado?"],
+                           'DIVISIONES': [
+                               { template: "Una fábrica empaqueta {total} {sujeto_p} en {cont_p}. Si en cada {cont_s} caben {n2} {sujeto_p}, ¿cuántas {cont_p} se necesitarán?", answer: 'n1' },
+                               { template: "{personaje} debe acomodar {total} {sujeto_p} en {n1} {cont_p} de forma equitativa. ¿Cuántos {sujeto_p} irán en cada {cont_s}?", answer: 'n2' }
+                           ]
+                        }
+                    }
+                ],
                 getRandomElement: function(arr) { return arr[Math.floor(PRNG.next() * arr.length)]; },
                 getRandomNumber: function(min, max) { return Math.floor(PRNG.next() * (max - min + 1)) + min; },
                 populateTemplate: function(template, context) { var populated = template; for (var key in context) { var regex = new RegExp('{' + key + '}', 'g'); populated = populated.replace(regex, context[key]); } return populated; },
@@ -867,25 +948,18 @@
                     var solvedInCategory = profile ? (profile.solvedQuestions[type] ? profile.solvedQuestions[type].length : 0) : 0;
                     var masteryRankIndex = Math.floor(solvedInCategory / 5);
                     var difficultyConfig = ESCALADO_DE_DIFICULTAD[type][Math.min(masteryRankIndex, ESCALADO_DE_DIFICULTAD[type].length - 1)];
+                    
                     var pack = this.getRandomElement(this.thematicPacks);
                     var sujeto = this.getRandomElement(pack.sujetos);
                     var personaje = this.getRandomElement(pack.personajes);
-                    var n1, n2, n3, correctAnswer, total, template, templateArray, templateObj;
+                    var n1, n2, correctAnswer, total, template, templateObj;
                     var context = {};
-
-                    templateArray = this.templates[type];
+                    
+                    var templateArray = pack.templates[type];
 
                     if (type === 'SUMAS') {
-                        if (solvedInCategory >= 20) {
-                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n3 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
-                            correctAnswer = n1 + n2 + n3;
-                            context.n3 = (PRNG.next() > 0.6) ? numberToLiteral(n3, sujeto.g) : n3;
-                            templateArray = this.templates['SUMAS_3'];
-                        } else {
-                            n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
-                            correctAnswer = n1 + n2;
-                            templateArray = this.templates['SUMAS_2'];
-                        }
+                        n1 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max); n2 = this.getRandomNumber(difficultyConfig.min, difficultyConfig.max);
+                        correctAnswer = n1 + n2;
                         template = this.getRandomElement(templateArray);
                     } else if (type === 'RESTAS') {
                         n1 = this.getRandomNumber(difficultyConfig.n1_min, difficultyConfig.n1_max); n2 = this.getRandomNumber(difficultyConfig.n2_min, Math.min(n1 - 1, difficultyConfig.n2_max));
@@ -901,15 +975,9 @@
                         if (n1 === 0 || n2 === 0) { n2 = 2; }
                         total = n1 * n2;
                         context.total = (PRNG.next() > 0.5) ? numberToLiteral(total, sujeto.g) : total;
-                        
                         templateObj = this.getRandomElement(templateArray);
                         template = templateObj.template;
-                        
-                        if (templateObj.answer === 'n1') {
-                            correctAnswer = n1;
-                        } else {
-                            correctAnswer = n2;
-                        }
+                        correctAnswer = (templateObj.answer === 'n1') ? n1 : n2;
                     }
 
                     context.personaje = personaje; 
@@ -917,11 +985,17 @@
                     context.n2 = (PRNG.next() > 0.5) ? numberToLiteral(n2, sujeto.g) : n2;
                     context.sujeto_p = sujeto.p; context.sujeto_s = sujeto.s;
                     context.cont_p = sujeto.cont.p; context.cont_s = sujeto.cont.s;
-                    context.verbo_gain = pack.verbos.gain;
-                    context.verbo_loss = pack.verbos.loss;
                     
                     var questionText = this.populateTemplate(template, context);
                     var options = this.generateOptions(correctAnswer);
+
+                    if (PRNG.next() < 0.20) { 
+                        var pos = correctAnswer - 1;
+                        if (pos >= 0 && pos < questionText.length) {
+                            questionText = questionText.substring(0, pos) + questionText.charAt(pos).toUpperCase() + questionText.substring(pos + 1);
+                        }
+                    }
+
                     return { id: type + ':' + new Date().getTime(), question: questionText, options: options, correctAnswerIndex: options.indexOf(correctAnswer) };
                 }
             };
@@ -976,8 +1050,15 @@
                 endQuiz: function(wasCorrect) {
                     var profile = state.profiles[state.activeProfile];
                     var difficulty = state.quiz.currentDifficulty;
-                    if (wasCorrect) { if (profile.solvedQuestions[difficulty].indexOf(state.quiz.currentQuestion.id) === -1) { profile.solvedQuestions[difficulty].push(state.quiz.currentQuestion.id); }
-                    } else { profile.perfectRuns[difficulty] = false; }
+                    if (wasCorrect) {
+                        profile.aciertos++;
+                        if (profile.solvedQuestions[difficulty].indexOf(state.quiz.currentQuestion.id) === -1) { 
+                            profile.solvedQuestions[difficulty].push(state.quiz.currentQuestion.id); 
+                        }
+                    } else { 
+                        profile.errores++;
+                        profile.perfectRuns[difficulty] = false; 
+                    }
                     saveProfilesToStorage();
                     setTimeout(function() {
                         if (wasCorrect) { EventBus.emit('quiz:victory'); } else { var correctAnswerText = state.quiz.currentQuestion.options[state.quiz.currentQuestion.correctAnswerIndex]; EventBus.emit('quiz:defeat', { correctAnswer: 'LA RESPUESTA CORRECTA ERA: ' + correctAnswerText }); }
@@ -1052,10 +1133,10 @@
                 window.addEventListener('resize', calculateLayout);
                 document.addEventListener('fullscreenchange', handleFullscreenChange); document.addEventListener('webkitfullscreenchange', handleFullscreenChange); document.addEventListener('mozfullscreenchange', handleFullscreenChange); document.addEventListener('MSFullscreenChange', handleFullscreenChange);
                 
-                EventBus.on('system:requestNavigation', function(d) { AudioManager.playSound('navigate'); if(d.requestFullscreen) requestFullscreen(); if(d.fromVictory) { renderProfileRank(); populateLevelGrid(); } if(d.windowId === 'profiles') { renderProfiles(); } showWindow(d.windowId); });
+                EventBus.on('system:requestNavigation', function(d) { AudioManager.playSound('navigate'); if(d.requestFullscreen) requestFullscreen(); if(d.fromVictory || d.windowId === 'mainMenu') { renderProfileRank(); populateLevelGrid(); renderProfileStats(); } if(d.windowId === 'profiles') { renderProfiles(); } showWindow(d.windowId); });
                 EventBus.on('system:requestFullscreen', function() { AudioManager.playSound('navigate'); requestFullscreen(); });
                 EventBus.on('system:closeSession', function() { AudioManager.playSound('navigate'); document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); if (state.currentWindow === 'game') { clearInterval(state.quiz.timerId); showWindow('mainMenu'); } else { state.activeProfile = null; showWindow('profiles'); } });
-                EventBus.on('profile:selected', function(d) { AudioManager.playSound('navigate'); state.activeProfile = d.profileName; state.quiz.streak = 0; renderProfileRank(); populateLevelGrid(); showWindow('mainMenu'); });
+                EventBus.on('profile:selected', function(d) { AudioManager.playSound('navigate'); state.activeProfile = d.profileName; state.quiz.streak = 0; renderProfileRank(); populateLevelGrid(); renderProfileStats(); showWindow('mainMenu'); });
                 EventBus.on('profile:deleted', function(d) { AudioManager.playSound('error'); delete state.profiles[d.profileName]; saveProfilesToStorage(); renderProfiles(); });
                 EventBus.on('profile:clearActive', function() { AudioManager.playSound('navigate'); state.activeProfile = null; showWindow('profiles'); });
                 
