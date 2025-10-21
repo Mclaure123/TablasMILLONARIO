@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL QUIZ v6.5.1 (CORE UPDATE)</title>
+    <title>TERMINAL QUIZ v6.5.3 (ADAPTIVE TIME)</title>
     <style>
         :root {
             --color-bg-primary: #0A0A0A; --color-surface: #141414; --color-func: #2A2A2A; --color-text-passive: #B0B0B0; --color-text-bright: #FFFFFF; --color-accent-primary: #00FFFF; --color-accent-bios: #00FF8A; --color-error: #FF414B; --color-success: #39FF14; --color-accent-gold: #FFD700; --color-warning: #FFD300;
@@ -536,13 +536,13 @@
             <div id="profiles" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: SELECT PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuProfiles">&#9881;</button><div id="settingsMenuProfiles" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
                 <div class="window-content"><h2>PERFILES DE USUARIO</h2><ul id="profilesList"></ul><button id="goToPlayerCreateButton" class="interactive-button">CREAR NUEVO PERFIL</button></div>
-                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
             </div>
 
             <div id="player" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: CREATE PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuPlayer">&#9881;</button><div id="settingsMenuPlayer" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
                 <div class="window-content"><h2>NUEVO JUGADOR</h2><div id="playerNameDisplay"><span id="playerNameText"></span><span class="cursor"></span></div><div id="virtualKeyboard"></div><div style="display: flex; gap: 16px; margin-top: 16px;"><button id="cancelPlayerButton">CANCELAR</button></div></div>
-                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
             </div>
             
             <div id="mainMenu" class="window">
@@ -565,7 +565,7 @@
                     </div>
                     <div id="levelGrid"></div><button id="backToProfilesButton" style="margin-top: 16px;">VOLVER A PERFILES</button>
                 </div>
-                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
             </div>
             
             <div id="game" class="window">
@@ -579,7 +579,7 @@
                     </div>
                 </header>
                 <div class="window-content"><div id="glitch-wrapper"><div id="holographic-panel"><h2>CALCULAR</h2><p id="quizQuestion"></p><div id="quizOptions"></div></div></div></div>
-                <footer class="telemetry-footer">BUILD: v6.5.1-core</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
             </div>
             
             <div id="victory" class="window">
@@ -623,7 +623,7 @@
     <script>
         (function() {
             'use strict';
-            var QUESTION_TIME = 25;
+            var BASE_QUESTION_TIME = 25;
             
             function createCelebrationParticles(x, y) {
                 var colors = ['#39FF14', '#00FFFF', '#FFD700', '#00FF8A'];
@@ -652,7 +652,7 @@
             function getDefaultSettings() { return { soundEnabled: true, paletteIndex: 0 }; }
             function getEmptyProfileData() { return { solvedQuestions: { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false }, aciertos: 0, errores: 0 }; }
 
-            var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: QUESTION_TIME, timerId: null } };
+            var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: BASE_QUESTION_TIME, timerId: null, totalTime: BASE_QUESTION_TIME } };
             var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), insignias: document.getElementById('insignias'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
             var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasList: document.getElementById('insigniasList'), closeInsigniasButton: document.getElementById('closeInsigniasButton'), glitchOverlay: document.getElementById('glitchOverlay') };
             var PLAYER_KEYBOARD_LAYOUT = [
@@ -744,6 +744,24 @@
             function renderProfiles() { ui.profilesList.innerHTML = ''; Object.keys(state.profiles).forEach(function(pn) { var li = document.createElement('li'); li.className = 'profile-entry'; var pb = document.createElement('button'); pb.className = 'interactive-button profile-button'; pb.textContent = pn; pb.setAttribute('data-profile-name', pn); var db = document.createElement('button'); db.className = 'delete-button'; db.textContent = 'X'; db.setAttribute('data-profile-name', pn); li.appendChild(pb); li.appendChild(db); ui.profilesList.appendChild(li); }); }
             function createInsigniaSVG(shape, color) { var base = `<svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 H60 V75 L30 90 L0 75 Z" fill="#141414" stroke="#0A0A0A" stroke-width="2"/>`; var coloredShape = shape.replace(/%%COLOR%%/g, color); return base + coloredShape + '</svg>'; }
             function renderProfileRank() { if (!state.activeProfile) return; var profile = state.profiles[state.activeProfile]; var totalSolved = 0; var categories = Object.keys(profile.solvedQuestions); for (var i = 0; i < categories.length; i++) { totalSolved += profile.solvedQuestions[categories[i]].length; } var rankIndex = Math.floor(totalSolved / 5); rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1); var insigniaShape = RANK_SHAPES[rankIndex]; ui.profileDisplayName.textContent = state.activeProfile; if(insigniaShape) { ui.rankInsigniaDisplay.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700'); } else { ui.rankInsigniaDisplay.innerHTML = ''; } }
+            
+            function animateCounter(element, finalValue, duration) {
+                var startValue = 0;
+                var range = finalValue - startValue;
+                var startTime = null;
+
+                function step(timestamp) {
+                    if (!startTime) startTime = timestamp;
+                    var progress = timestamp - startTime;
+                    var increment = Math.min(progress / duration, 1);
+                    element.textContent = Math.floor(increment * range + startValue);
+                    if (increment < 1) {
+                        window.requestAnimationFrame(step);
+                    }
+                }
+                window.requestAnimationFrame(step);
+            }
+
             function renderProfileStats() {
                 if (!state.activeProfile) return;
                 var profile = state.profiles[state.activeProfile];
@@ -751,11 +769,12 @@
                 var errores = profile.errores || 0;
                 var total = aciertos + errores;
                 var precision = (total === 0) ? 0 : (aciertos / total) * 100;
-
-                document.getElementById('statValueAciertos').textContent = aciertos;
-                document.getElementById('statValueErrores').textContent = errores;
+                
+                animateCounter(document.getElementById('statValueAciertos'), aciertos, 500);
+                animateCounter(document.getElementById('statValueErrores'), errores, 500);
                 document.getElementById('statValuePrecision').textContent = precision.toFixed(1) + '%';
             }
+
             function populateLevelGrid() { 
                 ui.levelGrid.innerHTML = ''; 
                 if (!state.activeProfile) return; 
@@ -1005,6 +1024,13 @@
                     function fnv1a(str) { for(var i = 0, h = 0x811c9dc5; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x01000193); return h; }
                     var seed = fnv1a(state.activeProfile + d + state.profiles[state.activeProfile].solvedQuestions[d].length + new Date().getTime());
                     PRNG.seed(seed);
+
+                    var profile = state.profiles[state.activeProfile];
+                    var solvedInCategory = profile.solvedQuestions[d] ? profile.solvedQuestions[d].length : 0;
+                    var masteryRankIndex = Math.floor(solvedInCategory / 5);
+                    var calculatedTime = Math.floor(BASE_QUESTION_TIME + (masteryRankIndex * 1.5));
+                    state.quiz.totalTime = calculatedTime;
+
                     ui.gameHudPlayerName.textContent = 'JUGADOR :: ' + state.activeProfile;
                     var questionData = QuestionGenerator.createQuestion(d);
                     state.quiz.currentQuestion = questionData;
@@ -1066,14 +1092,14 @@
                 },
                 updateHud: function() {
                     ui.gameHudStreak.textContent = "RACHA: " + state.quiz.streak;
-                    var timePercentage = (state.quiz.timerValue / QUESTION_TIME) * 100;
+                    var timePercentage = (state.quiz.timerValue / state.quiz.totalTime) * 100;
                     ui.timeBarFill.style.width = timePercentage + '%';
                     ui.timeBarFill.classList.remove('warning', 'critical');
                     if (timePercentage < 25) { ui.timeBarFill.classList.add('critical'); } 
                     else if (timePercentage < 50) { ui.timeBarFill.classList.add('warning'); }
                 },
                 startTimer: function() {
-                    state.quiz.timerValue = QUESTION_TIME;
+                    state.quiz.timerValue = state.quiz.totalTime;
                     this.updateHud();
                     state.quiz.timerId = setInterval(function() {
                         state.quiz.timerValue--;
@@ -1099,7 +1125,7 @@
             };
             
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.5.1 (CORE UPDATE)...');
+                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.5.3 (ADAPTIVE TIME)...');
                 loadSettings(); loadProfilesFromStorage(); applyPalette(state.settings.paletteIndex); updateSoundToggleButtons(); 
                 calculateLayout();
                 renderPlayerKeyboard(); 
@@ -1208,6 +1234,7 @@
                 ui.levelGrid.addEventListener('mouseout', function(e) { hoveredLevelCategory = null; });
 
                 document.addEventListener('keydown', function(e) {
+                    // Easter Egg: Level Up
                     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
                         if (state.currentWindow === 'mainMenu' && hoveredLevelCategory && state.activeProfile) {
                             console.log('[EGG] Combinación secreta activada para: ' + hoveredLevelCategory);
@@ -1224,6 +1251,7 @@
                         }
                     }
                     
+                    // Easter Egg: Show Hint
                     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
                         if (state.currentWindow === 'game' && !state.quiz.isAnswered) {
                             e.preventDefault();
