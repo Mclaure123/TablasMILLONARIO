@@ -929,7 +929,7 @@
             var QuizManager = {
                 startQuiz: function(d) {
                     function fnv1a(str) { for(var i = 0, h = 0x811c9dc5; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x01000193); return h; }
-                    var seed = fnv1a(state.activeProfile + d + state.profiles[state.activeProfile].solvedQuestions[d].length);
+                    var seed = fnv1a(state.activeProfile + d + state.profiles[state.activeProfile].solvedQuestions[d].length + new Date().getTime());
                     PRNG.seed(seed);
                     ui.gameHudPlayerName.textContent = 'JUGADOR :: ' + state.activeProfile;
                     var questionData = QuestionGenerator.createQuestion(d);
