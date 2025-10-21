@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL QUIZ v6.5.3 (ADAPTIVE TIME)</title>
+    <title>TERMINAL QUIZ v6.5.5 (STABILITY & UI)</title>
     <style>
         :root {
             --color-bg-primary: #0A0A0A; --color-surface: #141414; --color-func: #2A2A2A; --color-text-passive: #B0B0B0; --color-text-bright: #FFFFFF; --color-accent-primary: #00FFFF; --color-accent-bios: #00FF8A; --color-error: #FF414B; --color-success: #39FF14; --color-accent-gold: #FFD700; --color-warning: #FFD300;
@@ -24,7 +24,7 @@
         .window.active { opacity: 1; transform: translateX(0) translateZ(0px); pointer-events: auto; visibility: visible; }
         
         .window-content { flex-grow: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--gap-m) 0; min-height: 0; }
-        #preload, #title, #victory, #gameOver { justify-content: center; padding: var(--gap-m) var(--gap-l); }
+        #preload, #title, #victory, #gameOver, #timeOut, #auth { justify-content: center; padding: var(--gap-m) var(--gap-l); }
         h1 { font-size: clamp(2rem, 10vmin, 5rem); color: var(--color-accent-primary); letter-spacing: clamp(4px, 1vmin, 8px); text-shadow: 0 0 5px var(--color-accent-primary), 0 0 15px var(--color-accent-primary), 0 0 25px var(--color-accent-primary); max-width: 100%; word-break: break-word; }
         h2 { font-size: clamp(1.5rem, 6vmin, 3rem); color: var(--color-text-bright); margin-bottom: var(--gap-m); display: flex; align-items: center; justify-content: center; }
         p { font-size: clamp(0.8rem, 2.5vmin, 1.1rem); color: var(--color-text-passive); max-width: 90%; line-height: 1.6; }
@@ -89,15 +89,73 @@
         .telemetry-group { display: flex; align-items: center; gap: var(--gap-m); }
         .settings-button { background: none; border: none; font-size: clamp(1.2rem, 4vmin, 1.8rem); color: var(--color-text-passive); cursor: pointer; padding: 0 var(--gap-s); transition: color 220ms, transform 220ms; }
         .settings-button:hover { color: var(--color-accent-primary); transform: rotate(90deg); }
-        .settings-menu { position: absolute; top: 100%; right: 0; background-color: var(--color-bg-primary); border: 1px solid var(--color-surface); z-index: 100; display: flex; flex-direction: column; opacity: 0; visibility: hidden; transform: translateY(-10px); pointer-events: none; transition: opacity 220ms, visibility 220ms, transform 220ms; }
-        .settings-menu.active { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
-        .settings-menu button { width: 100%; text-align: left; background-color: var(--color-func); border: none; font-size: clamp(0.8rem, 2vmin, 1rem); border-top: 1px solid var(--color-surface); }
-        .settings-menu button:first-child { border-top: none; }
-        .settings-menu button:hover { background-color: var(--color-surface); }
-        .palette-container { position: relative; }
-        .palette-submenu { display: none; position: absolute; top: 0; right: 100%; background-color: var(--color-bg-primary); border: 1px solid var(--color-surface); }
-        .palette-container.open .palette-submenu { display: block; }
         
+        #settingsModal {
+            background-color: rgba(10, 10, 10, 0.9);
+            z-index: 1000;
+        }
+        .settings-panel {
+            background: var(--color-bg-primary);
+            border: 2px solid var(--color-surface);
+            padding: var(--gap-l);
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap-l);
+        }
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap-m);
+            align-items: flex-start;
+            text-align: left;
+            border-top: 1px solid var(--color-surface);
+            padding-top: var(--gap-m);
+        }
+        .settings-section:first-child { border-top: none; padding-top: 0; }
+        .settings-section h3 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--color-accent-primary);
+        }
+        .palette-options { display: flex; gap: var(--gap-m); }
+        .palette-swatch {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--color-surface);
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .palette-swatch:hover { transform: scale(1.1); }
+        .palette-swatch.active { border-color: var(--color-accent-bios); }
+
+        #auth-text { font-size: clamp(1.2rem, 4vmin, 1.8rem); letter-spacing: 2px; }
+        #auth-text .cursor { display: inline-block; background-color: var(--color-accent-bios); width: 0.6ch; height: 1em; animation: blink 1s steps(2, start) infinite; }
+        
+        #categoryInfoPanel {
+            position: absolute;
+            right: var(--gap-l);
+            top: 50%;
+            transform: translateY(-50%) translateX(100%);
+            width: 300px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--color-surface);
+            padding: var(--gap-m);
+            text-align: left;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+        #categoryInfoPanel.active {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        .info-item { display: flex; justify-content: space-between; font-size: clamp(0.8rem, 2vmin, 1rem); }
+        .info-label { color: var(--color-text-passive); }
+        .info-value { color: var(--color-text-bright); font-weight: bold; }
+        #infoValueTitle { color: var(--color-accent-primary); }
+
         @keyframes particle-burst {
             0% { transform: translate(0, 0) scale(1); opacity: 1; }
             100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
@@ -533,21 +591,31 @@
             <div id="preload" class="window active"><H1>CARGANDO...</H1></div>
             <div id="title" class="window"><h1>TERMINAL QUIZ</h1><p>PRESIONA CUALQUIER TECLA PARA CONTINUAR</p></div>
             
+            <div id="auth" class="window">
+                <p id="auth-text"></p>
+            </div>
+
             <div id="profiles" class="window">
-                <header class="telemetry-header"><span>TERMINAL QUIZ :: SELECT PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuProfiles">&#9881;</button><div id="settingsMenuProfiles" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: SELECT PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button">&#9881;</button></div></header>
                 <div class="window-content"><h2>PERFILES DE USUARIO</h2><ul id="profilesList"></ul><button id="goToPlayerCreateButton" class="interactive-button">CREAR NUEVO PERFIL</button></div>
-                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.5-professional-ui</footer>
             </div>
 
             <div id="player" class="window">
-                <header class="telemetry-header"><span>TERMINAL QUIZ :: CREATE PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuPlayer">&#9881;</button><div id="settingsMenuPlayer" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: CREATE PROFILE</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button">&#9881;</button></div></header>
                 <div class="window-content"><h2>NUEVO JUGADOR</h2><div id="playerNameDisplay"><span id="playerNameText"></span><span class="cursor"></span></div><div id="virtualKeyboard"></div><div style="display: flex; gap: 16px; margin-top: 16px;"><button id="cancelPlayerButton">CANCELAR</button></div></div>
-                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.5-professional-ui</footer>
             </div>
             
             <div id="mainMenu" class="window">
-                <header class="telemetry-header"><span>TERMINAL QUIZ :: MAIN MENU</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button" data-menu-id="settingsMenuMain">&#9881;</button><div id="settingsMenuMain" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div></div></header>
-                <div class="window-content">
+                <header class="telemetry-header"><span>TERMINAL QUIZ :: MAIN MENU</span><div class="telemetry-group"><div class="status-light"></div><span>SYSTEM ONLINE</span><button class="settings-button">&#9881;</button></div></header>
+                <div class="window-content" style="position: relative;">
+                    <div id="categoryInfoPanel">
+                        <h3 id="infoValueTitle"></h3>
+                        <div class="info-item"><span class="info-label">Preguntas Resueltas:</span><span class="info-value" id="infoValueSolved"></span></div>
+                        <div class="info-item"><span class="info-label">Rango de Dificultad:</span><span class="info-value" id="infoValueRank"></span></div>
+                        <div class="info-item"><span class="info-label">Tiempo Adaptativo:</span><span class="info-value" id="infoValueTime"></span></div>
+                    </div>
                     <h2 id="mainMenuHeader">JUGADOR: <span id="profileDisplayName"></span><span id="rankInsigniaDisplay"></span></h2>
                     <div id="profileStatsContainer">
                         <div class="stat-item">
@@ -565,7 +633,7 @@
                     </div>
                     <div id="levelGrid"></div><button id="backToProfilesButton" style="margin-top: 16px;">VOLVER A PERFILES</button>
                 </div>
-                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.5-professional-ui</footer>
             </div>
             
             <div id="game" class="window">
@@ -574,12 +642,11 @@
                     <span id="gameHudPlayerName" class="centered-hud-item"></span>
                     <div class="telemetry-group">
                         <div id="timeBarContainer"><div id="timeBarFill"></div></div>
-                        <button class="settings-button" data-menu-id="settingsMenuGame">&#9881;</button>
-                        <div id="settingsMenuGame" class="settings-menu"><button class="sound-toggle-button">SONIDO: ON</button><button class="insignias-button">INSIGNIAS</button><div class="palette-container"><button class="palette-toggle-button">PALETA</button><div class="palette-submenu"></div></div><button class="close-session-button">CERRAR SESIÓN</button></div>
+                        <button class="settings-button">&#9881;</button>
                     </div>
                 </header>
                 <div class="window-content"><div id="glitch-wrapper"><div id="holographic-panel"><h2>CALCULAR</h2><p id="quizQuestion"></p><div id="quizOptions"></div></div></div></div>
-                <footer class="telemetry-footer">BUILD: v6.5.3-adaptive-time</footer>
+                <footer class="telemetry-footer">BUILD: v6.5.5-professional-ui</footer>
             </div>
             
             <div id="victory" class="window">
@@ -598,8 +665,10 @@
                     <button id="victoryToMenuButton" class="starfleet-button">TRANSPORTAR AL MENÚ</button>
                 </div>
             </div>
-            <div id="gameOver" class="window"><div class="ascii-art-container"><div class="ascii-art ascii-art-defeat"></div></div><h1 style="color: var(--color-error);">RESPUESTA INCORRECTA</h1><h2>DERROTA</h2><p id="gameOverCorrectAnswer"></p><button id="gameOverToMenuButton">REINTENTAR DESDE EL MENÚ</button></div>
+            <div id="gameOver" class="window"><div class="ascii-art-container"></div><h1 style="color: var(--color-error);">RESPUESTA INCORRECTA</h1><h2>DERROTA</h2><p id="gameOverCorrectAnswer"></p><button id="gameOverToMenuButton">REINTENTAR DESDE EL MENÚ</button></div>
             
+            <div id="timeOut" class="window"><div class="ascii-art-container"></div><h1 style="color: var(--color-warning);">TIEMPO AGOTADO</h1><h2>TRANSMISIÓN INTERRUMPIDA</h2><p>La conexión con el servidor de la Flota Estelar se ha perdido.</p><button id="timeOutToMenuButton">REINTENTAR DESDE EL MENÚ</button></div>
+
             <div id="insignias" class="window">
                 <header class="telemetry-header"><span>TERMINAL QUIZ :: VISUALIZADOR DE INSIGNIAS</span></header>
                 <div class="window-content">
@@ -613,6 +682,26 @@
                     </div>
                 </div>
                 <footer class="telemetry-footer"><button id="closeInsigniasButton">VOLVER</button></footer>
+            </div>
+
+            <div id="settingsModal" class="window">
+                <div class="settings-panel">
+                    <h2>CONFIGURACIÓN DEL SISTEMA</h2>
+                    <div class="settings-section">
+                        <h3>SONIDO</h3>
+                        <button class="sound-toggle-button">SONIDO: ON</button>
+                    </div>
+                    <div class="settings-section">
+                        <h3>PALETA DE COLORES</h3>
+                        <div class="palette-options" id="modalPaletteOptions"></div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>ACCIONES</h3>
+                        <button class="insignias-button">VISUALIZADOR DE INSIGNIAS</button>
+                        <button class="close-session-button">CERRAR SESIÓN DE PERFIL</button>
+                    </div>
+                    <button id="closeSettingsModalButton">APLICAR Y CERRAR</button>
+                </div>
             </div>
 
             <div id="fullscreenOverlay" class="window" style="z-index: 999; background-color: rgba(0,0,0,0.95);"><h2>MODO PANTALLA COMPLETA REQUERIDO</h2><p>PARA UNA EXPERIENCIA ÓPTIMA, EL SISTEMA REQUIERE OPERAR EN MODO DE PANTALLA COMPLETA.</p><button id="reEnterFullscreenButton">REACTIVAR</button></div>
@@ -653,8 +742,8 @@
             function getEmptyProfileData() { return { solvedQuestions: { 'SUMAS': [], 'RESTAS': [], 'MULTIPLICACION': [], 'DIVISIONES': [] }, perfectRuns: { 'SUMAS': false, 'RESTAS': false, 'MULTIPLICACION': false, 'DIVISIONES': false }, aciertos: 0, errores: 0 }; }
 
             var state = { currentWindow: 'preload', previousWindow: null, activeProfile: null, profiles: {}, newPlayerName: '', isShiftActive: false, settings: getDefaultSettings(), quiz: { currentDifficulty: null, currentQuestion: null, isAnswered: false, prngState: 0, streak: 0, timerValue: BASE_QUESTION_TIME, timerId: null, totalTime: BASE_QUESTION_TIME } };
-            var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), insignias: document.getElementById('insignias'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
-            var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasList: document.getElementById('insigniasList'), closeInsigniasButton: document.getElementById('closeInsigniasButton'), glitchOverlay: document.getElementById('glitchOverlay') };
+            var windows = { preload: document.getElementById('preload'), title: document.getElementById('title'), auth: document.getElementById('auth'), profiles: document.getElementById('profiles'), player: document.getElementById('player'), mainMenu: document.getElementById('mainMenu'), game: document.getElementById('game'), victory: document.getElementById('victory'), gameOver: document.getElementById('gameOver'), timeOut: document.getElementById('timeOut'), insignias: document.getElementById('insignias'), settingsModal: document.getElementById('settingsModal'), fullscreenOverlay: document.getElementById('fullscreenOverlay') };
+            var ui = { levelGrid: document.getElementById('levelGrid'), profilesList: document.getElementById('profilesList'), goToPlayerCreateButton: document.getElementById('goToPlayerCreateButton'), mainMenuHeader: document.getElementById('mainMenuHeader'), profileDisplayName: document.getElementById('profileDisplayName'), rankInsigniaDisplay: document.getElementById('rankInsigniaDisplay'), backToProfilesButton: document.getElementById('backToProfilesButton'), playerNameDisplay: document.getElementById('playerNameDisplay'), playerNameText: document.getElementById('playerNameText'), virtualKeyboard: document.getElementById('virtualKeyboard'), cancelPlayerButton: document.getElementById('cancelPlayerButton'), quizQuestion: document.getElementById('quizQuestion'), quizOptions: document.getElementById('quizOptions'), victoryToMenuButton: document.getElementById('victoryToMenuButton'), gameOverToMenuButton: document.getElementById('gameOverToMenuButton'), timeOutToMenuButton: document.getElementById('timeOut').querySelector('button'), gameOverCorrectAnswer: document.getElementById('gameOverCorrectAnswer'), reEnterFullscreenButton: document.getElementById('reEnterFullscreenButton'), holographicPanel: document.getElementById('holographic-panel'), glitchWrapper: document.getElementById('glitch-wrapper'), gameHudPlayerName: document.getElementById('gameHudPlayerName'), gameHudStreak: document.getElementById('gameHudStreak'), timeBarFill: document.getElementById('timeBarFill'), insigniasList: document.getElementById('insigniasList'), closeInsigniasButton: document.getElementById('closeInsigniasButton'), glitchOverlay: document.getElementById('glitchOverlay'), categoryInfoPanel: document.getElementById('categoryInfoPanel'), closeSettingsModalButton: document.getElementById('closeSettingsModalButton'), modalPaletteOptions: document.getElementById('modalPaletteOptions') };
             var PLAYER_KEYBOARD_LAYOUT = [
                 ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I'],
                 ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K'],
@@ -682,13 +771,11 @@
             
             function showWindow(windowId) {
                 if (state.currentWindow === windowId) return;
-
                 ui.glitchOverlay.classList.add('active');
                 
                 setTimeout(function() {
-                    if (windowId !== 'insignias') {
-                        state.previousWindow = state.currentWindow;
-                    }
+                    state.previousWindow = state.currentWindow;
+                    
                     for (var id in windows) {
                         windows[id].classList.remove('active');
                     }
@@ -746,8 +833,9 @@
             function renderProfileRank() { if (!state.activeProfile) return; var profile = state.profiles[state.activeProfile]; var totalSolved = 0; var categories = Object.keys(profile.solvedQuestions); for (var i = 0; i < categories.length; i++) { totalSolved += profile.solvedQuestions[categories[i]].length; } var rankIndex = Math.floor(totalSolved / 5); rankIndex = Math.min(rankIndex, RANK_SHAPES.length - 1); var insigniaShape = RANK_SHAPES[rankIndex]; ui.profileDisplayName.textContent = state.activeProfile; if(insigniaShape) { ui.rankInsigniaDisplay.innerHTML = createInsigniaSVG(insigniaShape, '#FFD700'); } else { ui.rankInsigniaDisplay.innerHTML = ''; } }
             
             function animateCounter(element, finalValue, duration) {
-                var startValue = 0;
+                var startValue = parseInt(element.textContent) || 0;
                 var range = finalValue - startValue;
+                if (range === 0) { element.textContent = finalValue; return; }
                 var startTime = null;
 
                 function step(timestamp) {
@@ -757,6 +845,8 @@
                     element.textContent = Math.floor(increment * range + startValue);
                     if (increment < 1) {
                         window.requestAnimationFrame(step);
+                    } else {
+                        element.textContent = finalValue;
                     }
                 }
                 window.requestAnimationFrame(step);
@@ -770,8 +860,8 @@
                 var total = aciertos + errores;
                 var precision = (total === 0) ? 0 : (aciertos / total) * 100;
                 
-                animateCounter(document.getElementById('statValueAciertos'), aciertos, 500);
-                animateCounter(document.getElementById('statValueErrores'), errores, 500);
+                animateCounter(document.getElementById('statValueAciertos'), aciertos, 800);
+                animateCounter(document.getElementById('statValueErrores'), errores, 800);
                 document.getElementById('statValuePrecision').textContent = precision.toFixed(1) + '%';
             }
 
@@ -895,9 +985,32 @@
                 }
             }
 
-            function applyPalette(index) { if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; var key = PALETTE_KEYS[index]; if (key) { document.body.style.setProperty('--color-accent-primary', PALETTES[key]); } }
+            function applyPalette(index) { 
+                if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; 
+                var key = PALETTE_KEYS[index]; 
+                if (key) { 
+                    document.body.style.setProperty('--color-accent-primary', PALETTES[key]); 
+                    var swatches = document.querySelectorAll('.palette-swatch');
+                    swatches.forEach(function(sw) { sw.classList.remove('active'); });
+                    var activeSwatch = document.querySelector('.palette-swatch[data-palette-index="' + index + '"]');
+                    if (activeSwatch) activeSwatch.classList.add('active');
+                }
+            }
             function updateSoundToggleButtons() { var text = 'SONIDO: ' + (state.settings.soundEnabled ? 'ON' : 'OFF'); document.querySelectorAll('.sound-toggle-button').forEach(function(btn) { btn.textContent = text; }); }
-            function renderPaletteSubMenus() { document.querySelectorAll('.palette-submenu').forEach(function(submenu) { submenu.innerHTML = ''; if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; PALETTE_KEYS.forEach(function(key, index) { var button = document.createElement('button'); button.textContent = key; button.setAttribute('data-palette-index', index); if (typeof PALETTES !== 'undefined' && PALETTES[key]) { button.style.color = PALETTES[key]; } submenu.appendChild(button); }); }); }
+            function renderPaletteModalOptions() { 
+                ui.modalPaletteOptions.innerHTML = ''; 
+                if (typeof PALETTE_KEYS === 'undefined' || !PALETTE_KEYS) return; 
+                PALETTE_KEYS.forEach(function(key, index) { 
+                    var swatch = document.createElement('div');
+                    swatch.className = 'palette-swatch';
+                    swatch.setAttribute('data-palette-index', index);
+                    swatch.style.backgroundColor = PALETTES[key];
+                    if (index === state.settings.paletteIndex) {
+                        swatch.classList.add('active');
+                    }
+                    ui.modalPaletteOptions.appendChild(swatch);
+                });
+            }
             
             var PRNG = { seed: function(s) { state.quiz.prngState = s >>> 0; }, next: function() { var x = state.quiz.prngState; x ^= x << 13; x ^= x >> 17; x ^= x << 5; state.quiz.prngState = x; return (x >>> 0) / 0x100000000; } };
 
@@ -1046,7 +1159,11 @@
                     state.quiz.isAnswered = true;
                     var isCorrect = selectedIndex === state.quiz.currentQuestion.correctAnswerIndex;
                     var optionButtons = ui.quizOptions.querySelectorAll('.option-button');
-                    if (selectedIndex >= 0) { optionButtons[selectedIndex].classList.add(isCorrect ? 'correct-answer' : 'incorrect-answer'); }
+                    
+                    if (selectedIndex >= 0) { 
+                        optionButtons[selectedIndex].classList.add(isCorrect ? 'correct-answer' : 'incorrect-answer');
+                    }
+                    
                     if (isCorrect) { 
                         AudioManager.playSound('success'); 
                         state.quiz.streak++;
@@ -1057,7 +1174,7 @@
                     } else { 
                         AudioManager.playSound('error'); 
                         state.quiz.streak = 0; 
-                        if (optionButtons[state.quiz.currentQuestion.correctAnswerIndex]) {
+                        if (selectedIndex !== -1 && optionButtons[state.quiz.currentQuestion.correctAnswerIndex]) {
                             optionButtons[state.quiz.currentQuestion.correctAnswerIndex].classList.add('correct-answer');
                         } 
                         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) { 
@@ -1071,9 +1188,9 @@
                     }
                     this.updateHud();
                     optionButtons.forEach(function(btn) { btn.disabled = true; });
-                    this.endQuiz(isCorrect);
+                    this.endQuiz(isCorrect, selectedIndex === -1);
                 },
-                endQuiz: function(wasCorrect) {
+                endQuiz: function(wasCorrect, wasTimeout) {
                     var profile = state.profiles[state.activeProfile];
                     var difficulty = state.quiz.currentDifficulty;
                     if (wasCorrect) {
@@ -1087,7 +1204,14 @@
                     }
                     saveProfilesToStorage();
                     setTimeout(function() {
-                        if (wasCorrect) { EventBus.emit('quiz:victory'); } else { var correctAnswerText = state.quiz.currentQuestion.options[state.quiz.currentQuestion.correctAnswerIndex]; EventBus.emit('quiz:defeat', { correctAnswer: 'LA RESPUESTA CORRECTA ERA: ' + correctAnswerText }); }
+                        if (wasCorrect) { 
+                            EventBus.emit('quiz:victory'); 
+                        } else if (wasTimeout) {
+                            EventBus.emit('quiz:timeout');
+                        } else {
+                            var correctAnswerText = state.quiz.currentQuestion.options[state.quiz.currentQuestion.correctAnswerIndex]; 
+                            EventBus.emit('quiz:defeat', { correctAnswer: 'LA RESPUESTA CORRECTA ERA: ' + correctAnswerText }); 
+                        }
                     }, 1500);
                 },
                 updateHud: function() {
@@ -1106,7 +1230,7 @@
                         QuizManager.updateHud();
                         if (state.quiz.timerValue < 0) {
                             clearInterval(state.quiz.timerId);
-                            QuizManager.handleAnswer(-1);
+                            QuizManager.handleAnswer(-1); // -1 signifies a timeout
                         }
                     }, 1000);
                 },
@@ -1125,11 +1249,11 @@
             };
             
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.5.3 (ADAPTIVE TIME)...');
+                console.log('[BOOT][INFO] INICIALIZANDO QUIZ v6.5.5 (PROFESSIONAL UI)...');
                 loadSettings(); loadProfilesFromStorage(); applyPalette(state.settings.paletteIndex); updateSoundToggleButtons(); 
                 calculateLayout();
                 renderPlayerKeyboard(); 
-                renderPaletteSubMenus();
+                renderPaletteModalOptions();
                 
                 function advanceToProfiles() { AudioManager.init(); EventBus.emit('system:requestNavigation', { windowId: 'profiles', requestFullscreen: true }); }
                 windows.title.addEventListener('click', advanceToProfiles); document.addEventListener('keydown', advanceToProfiles, { once: true });
@@ -1140,20 +1264,20 @@
                 ui.backToProfilesButton.addEventListener('click', function() { EventBus.emit('profile:clearActive'); });
                 ui.victoryToMenuButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'mainMenu', fromVictory: true }); });
                 ui.gameOverToMenuButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'mainMenu' }); });
+                ui.timeOutToMenuButton.addEventListener('click', function() { EventBus.emit('system:requestNavigation', { windowId: 'mainMenu' }); });
                 ui.profilesList.addEventListener('click', function(e) { var n = e.target.getAttribute('data-profile-name'); if (!n) return; if (e.target.classList.contains('profile-button')) { EventBus.emit('profile:selected', { profileName: n }); } else if (e.target.classList.contains('delete-button')) { EventBus.emit('profile:deleted', { profileName: n }); } });
                 ui.virtualKeyboard.addEventListener('click', function(e) { var k = e.target.getAttribute('data-key'); if (!k || !e.target.classList.contains('key')) return; EventBus.emit('player:input', { key: k }); });
                 ui.levelGrid.addEventListener('click', function(e) { var b = e.target.closest('button[data-difficulty]'); if (b) { EventBus.emit('quiz:start', { difficulty: b.getAttribute('data-difficulty') }); } });
                 ui.quizOptions.addEventListener('click', function(e) { var btn = e.target.closest('.option-button'); if (btn && !state.quiz.isAnswered) { AudioManager.playSound('tick'); EventBus.emit('quiz:answer', { selectedIndex: parseInt(btn.getAttribute('data-option-index'), 10) }); } });
                 
-                document.querySelectorAll('.settings-button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); var menu = document.getElementById(e.target.getAttribute('data-menu-id')); var isActive = menu.classList.contains('active'); document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); if (!isActive) { menu.classList.add('active'); } }); });
+                document.querySelectorAll('.settings-button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); EventBus.emit('settings:show'); }); });
                 document.querySelectorAll('.sound-toggle-button').forEach(function(b) { b.addEventListener('click', function() { state.settings.soundEnabled = !state.settings.soundEnabled; updateSoundToggleButtons(); saveSettings(); }); });
-                document.querySelectorAll('.palette-toggle-button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); e.target.parentElement.classList.toggle('open'); }); });
-                document.querySelectorAll('.palette-submenu').forEach(function(s) { s.addEventListener('click', function(e) { if(e.target.hasAttribute('data-palette-index')) { state.settings.paletteIndex = parseInt(e.target.getAttribute('data-palette-index'), 10); applyPalette(state.settings.paletteIndex); saveSettings(); } }); });
-                document.querySelectorAll('.close-session-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('system:closeSession'); }); });
-                document.querySelectorAll('.insignias-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('insignias:show'); }); });
+                ui.modalPaletteOptions.addEventListener('click', function(e) { if(e.target.hasAttribute('data-palette-index')) { state.settings.paletteIndex = parseInt(e.target.getAttribute('data-palette-index'), 10); applyPalette(state.settings.paletteIndex); saveSettings(); } });
+                document.querySelectorAll('.close-session-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('settings:hide'); EventBus.emit('system:closeSession'); }); });
+                document.querySelectorAll('.insignias-button').forEach(function(b) { b.addEventListener('click', function() { EventBus.emit('settings:hide'); EventBus.emit('insignias:show'); }); });
                 ui.closeInsigniasButton.addEventListener('click', function() { EventBus.emit('insignias:hide'); });
+                ui.closeSettingsModalButton.addEventListener('click', function() { EventBus.emit('settings:hide'); });
                 
-                document.body.addEventListener('click', function() { document.querySelectorAll('.settings-menu.active, .palette-container.open').forEach(function(m) { m.classList.remove('active', 'open'); }); });
                 if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) { document.body.addEventListener('mousemove', function(e) { var x = (e.clientX / window.innerWidth) - 0.5, y = (e.clientY / window.innerHeight) - 0.5, rx = y * -5, ry = x * 5; if(ui.holographicPanel) ui.holographicPanel.style.transform = 'rotateX(' + (10 + rx) + 'deg) rotateY(' + ry + 'deg)'; }); }
                 
                 window.addEventListener('resize', calculateLayout);
@@ -1161,8 +1285,32 @@
                 
                 EventBus.on('system:requestNavigation', function(d) { AudioManager.playSound('navigate'); if(d.requestFullscreen) requestFullscreen(); if(d.fromVictory || d.windowId === 'mainMenu') { renderProfileRank(); populateLevelGrid(); renderProfileStats(); } if(d.windowId === 'profiles') { renderProfiles(); } showWindow(d.windowId); });
                 EventBus.on('system:requestFullscreen', function() { AudioManager.playSound('navigate'); requestFullscreen(); });
-                EventBus.on('system:closeSession', function() { AudioManager.playSound('navigate'); document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); if (state.currentWindow === 'game') { clearInterval(state.quiz.timerId); showWindow('mainMenu'); } else { state.activeProfile = null; showWindow('profiles'); } });
-                EventBus.on('profile:selected', function(d) { AudioManager.playSound('navigate'); state.activeProfile = d.profileName; state.quiz.streak = 0; renderProfileRank(); populateLevelGrid(); renderProfileStats(); showWindow('mainMenu'); });
+                EventBus.on('system:closeSession', function() { AudioManager.playSound('navigate'); if (state.currentWindow === 'game') { clearInterval(state.quiz.timerId); } state.activeProfile = null; showWindow('profiles'); });
+                
+                EventBus.on('profile:selected', function(d) { 
+                    AudioManager.playSound('navigate');
+                    state.activeProfile = d.profileName;
+                    state.quiz.streak = 0;
+                    
+                    var authTextEl = document.getElementById('auth-text');
+                    showWindow('auth');
+                    var messages = [
+                        'AUTENTICANDO: ' + d.profileName,
+                        'ACCESO CONCEDIDO',
+                        'CARGANDO DATOS DE LA FLOTA ESTELAR...'
+                    ];
+                    var i = 0;
+                    authTextEl.innerHTML = messages[i++] + '<span class="cursor"></span>';
+                    var authInterval = setInterval(function() {
+                        if (i < messages.length) {
+                            authTextEl.innerHTML = messages[i++] + '<span class="cursor"></span>';
+                        } else {
+                            clearInterval(authInterval);
+                            EventBus.emit('system:requestNavigation', { windowId: 'mainMenu' });
+                        }
+                    }, 800);
+                });
+
                 EventBus.on('profile:deleted', function(d) { AudioManager.playSound('error'); delete state.profiles[d.profileName]; saveProfilesToStorage(); renderProfiles(); });
                 EventBus.on('profile:clearActive', function() { AudioManager.playSound('navigate'); state.activeProfile = null; showWindow('profiles'); });
                 
@@ -1223,18 +1371,36 @@
                     showWindow('victory'); 
                 });
                 EventBus.on('quiz:defeat', function(d) { ui.gameOverCorrectAnswer.textContent = d.correctAnswer; showWindow('gameOver'); });
-                EventBus.on('insignias:show', function() { document.querySelectorAll('.settings-menu').forEach(function(m) { m.classList.remove('active'); }); renderInsignias(); showWindow('insignias'); });
+                EventBus.on('quiz:timeout', function() { showWindow('timeOut'); });
+                EventBus.on('insignias:show', function() { renderInsignias(); showWindow('insignias'); });
                 EventBus.on('insignias:hide', function() { showWindow(state.previousWindow); });
+                EventBus.on('settings:show', function() { showWindow('settingsModal'); });
+                EventBus.on('settings:hide', function() { showWindow(state.previousWindow); });
                 
                 var hoveredLevelCategory = null;
                 ui.levelGrid.addEventListener('mouseover', function(e) {
                     var button = e.target.closest('button[data-difficulty]');
-                    if (button) { hoveredLevelCategory = button.getAttribute('data-difficulty'); }
+                    if (button) { 
+                        hoveredLevelCategory = button.getAttribute('data-difficulty');
+                        var profile = state.profiles[state.activeProfile];
+                        var solved = profile.solvedQuestions[hoveredLevelCategory].length;
+                        var rankIndex = Math.floor(solved / 5);
+                        var timeBonus = rankIndex * 1.5;
+                        
+                        document.getElementById('infoValueTitle').textContent = MASTERY_NAMES[hoveredLevelCategory];
+                        document.getElementById('infoValueSolved').textContent = solved;
+                        document.getElementById('infoValueRank').textContent = RANK_NAMES[rankIndex] || 'Sin Rango';
+                        document.getElementById('infoValueTime').textContent = "+" + timeBonus.toFixed(1) + "s (Total: " + (BASE_QUESTION_TIME + timeBonus).toFixed(1) + "s)";
+                        
+                        ui.categoryInfoPanel.classList.add('active');
+                    }
                 });
-                ui.levelGrid.addEventListener('mouseout', function(e) { hoveredLevelCategory = null; });
+                ui.levelGrid.addEventListener('mouseout', function(e) { 
+                    hoveredLevelCategory = null; 
+                    ui.categoryInfoPanel.classList.remove('active');
+                });
 
                 document.addEventListener('keydown', function(e) {
-                    // Easter Egg: Level Up
                     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
                         if (state.currentWindow === 'mainMenu' && hoveredLevelCategory && state.activeProfile) {
                             console.log('[EGG] Combinación secreta activada para: ' + hoveredLevelCategory);
@@ -1243,15 +1409,16 @@
                                 for (var i = 0; i < 5; i++) {
                                     profile.solvedQuestions[hoveredLevelCategory].push('EGG_' + Date.now() + i);
                                 }
+                                profile.aciertos += 5;
                                 saveProfilesToStorage();
                                 populateLevelGrid();
                                 renderProfileRank();
+                                renderProfileStats();
                                 AudioManager.playSound('success');
                             }
                         }
                     }
                     
-                    // Easter Egg: Show Hint
                     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
                         if (state.currentWindow === 'game' && !state.quiz.isAnswered) {
                             e.preventDefault();
