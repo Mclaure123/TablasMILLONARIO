@@ -336,6 +336,13 @@
             25% { transform: translateX(-10px); }
             75% { transform: translateX(10px); }
         }
+        .option-button.flash-hint {
+            animation: flash-hint 700ms ease-out;
+        }
+        @keyframes flash-hint {
+            0%, 100% { border-color: var(--color-surface); box-shadow: 0 4px 16px rgba(0, 255, 255, 0.4); }
+            50% { border-color: var(--color-accent-bios); box-shadow: 0 0 40px var(--color-accent-bios); }
+        }
         
         .ascii-art-container { width: clamp(90px, 20vmin, 120px); height: clamp(90px, 20vmin, 120px); margin-bottom: var(--gap-m); }
         .centered-hud-item { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
@@ -989,13 +996,6 @@
                     var questionText = this.populateTemplate(template, context);
                     var options = this.generateOptions(correctAnswer);
 
-                    if (PRNG.next() < 0.20) { 
-                        var pos = correctAnswer - 1;
-                        if (pos >= 0 && pos < questionText.length) {
-                            questionText = questionText.substring(0, pos) + questionText.charAt(pos).toUpperCase() + questionText.substring(pos + 1);
-                        }
-                    }
-
                     return { id: type + ':' + new Date().getTime(), question: questionText, options: options, correctAnswerIndex: options.indexOf(correctAnswer) };
                 }
             };
@@ -1201,17 +1201,11 @@
                 EventBus.on('insignias:hide', function() { showWindow(state.previousWindow); });
                 
                 var hoveredLevelCategory = null;
-
                 ui.levelGrid.addEventListener('mouseover', function(e) {
                     var button = e.target.closest('button[data-difficulty]');
-                    if (button) {
-                        hoveredLevelCategory = button.getAttribute('data-difficulty');
-                    }
+                    if (button) { hoveredLevelCategory = button.getAttribute('data-difficulty'); }
                 });
-
-                ui.levelGrid.addEventListener('mouseout', function(e) {
-                    hoveredLevelCategory = null;
-                });
+                ui.levelGrid.addEventListener('mouseout', function(e) { hoveredLevelCategory = null; });
 
                 document.addEventListener('keydown', function(e) {
                     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
@@ -1222,11 +1216,25 @@
                                 for (var i = 0; i < 5; i++) {
                                     profile.solvedQuestions[hoveredLevelCategory].push('EGG_' + Date.now() + i);
                                 }
-                                
                                 saveProfilesToStorage();
                                 populateLevelGrid();
                                 renderProfileRank();
                                 AudioManager.playSound('success');
+                            }
+                        }
+                    }
+                    
+                    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+                        if (state.currentWindow === 'game' && !state.quiz.isAnswered) {
+                            e.preventDefault();
+                            var correctIndex = state.quiz.currentQuestion.correctAnswerIndex;
+                            var correctButton = ui.quizOptions.querySelector('.option-button[data-option-index="' + correctIndex + '"]');
+                            if (correctButton) {
+                                AudioManager.playSound('navigate');
+                                correctButton.classList.add('flash-hint');
+                                setTimeout(function() {
+                                    correctButton.classList.remove('flash-hint');
+                                }, 700);
                             }
                         }
                     }
